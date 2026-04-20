@@ -1,3 +1,12 @@
+/**
+ * @file TOF4Walls.cpp
+ * @brief Methods to manage Time-of-Flight sensors for wall detection
+ * 
+ * @author Roy Barron / chaBotsMX
+ * @date 20/04/26
+ */
+
+
 #include "TOF4Walls.h"
 #include <algorithm>
 const uint8_t TOF4Walls::CENTRAL_ZONES[4] = {5, 6, 9, 10};

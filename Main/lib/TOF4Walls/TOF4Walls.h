@@ -1,3 +1,13 @@
+/**
+ * @file TOF4Walls.h
+ * @brief Header file for managing Time-of-Flight sensors for wall detection
+ * 
+ * @author Roy Barron / chaBotsMX
+ * @date 20/04/26
+ */
+
+
+
 #ifndef TOF4WALLS_H
 #define TOF4WALLS_H
 
