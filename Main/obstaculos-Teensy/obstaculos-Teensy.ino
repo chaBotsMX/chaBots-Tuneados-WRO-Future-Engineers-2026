@@ -29,7 +29,7 @@ int lastServoCmd = servoCenter;
 int recoveryServoCmd = servoCenter;
 
 // IMU
-int setPointIMU = 0;   // heading base deseado
+int setPointIMU = 0;
 int errorIMU = 0;
 
 float kpIMU = 0.95f;
@@ -63,33 +63,36 @@ elapsedMillis reverseTimer;
 const uint32_t REVERSE_TIME_MS = 3000;
 
 int turnCount = 0;
-const int MAX_TURNS = 12;   // pon 0 si no quieres límite de vueltas
+const int MAX_TURNS = 12;
 
-// Confirmación de pared real.
-// Esto evita que el robot confunda un pilar con la pared.
+// Detección automática de sentido
+bool directionChosen = false;
+bool choosingDirection = false;
+elapsedMillis directionChoiceTimer;
+
+const uint32_t DIRECTION_CHOICE_WAIT_MS = 1000;
+
+// +1 = antihorario / izquierda / +90
+// -1 = horario / derecha / -90
+int turnDirection = 1;
+
+// Confirmación de pared real
 elapsedMillis noPillarTimer;
 elapsedMillis wallConfirmTimer;
 
 const uint32_t NO_PILLAR_BEFORE_TURN_MS = 350;
 const uint32_t WALL_CONFIRM_MS = 120;
 
-// Recuperación corta.
-// Se usa cuando:
-// 1. El pilar ya está demasiado cerca.
-// 2. El robot intentó girar en pared frontal pero no alcanzó a completar la vuelta.
+// Recuperación corta
 bool recovering = false;
 bool retryTurnAfterRecovery = false;
 elapsedMillis recoveryTimer;
 
-const uint32_t RECOVERY_REVERSE_TIME_MS = 15h00; // funcional 550
+const uint32_t RECOVERY_REVERSE_TIME_MS = 1500; // corregido de 15h00
 const uint16_t PILLAR_DANGER_FRONT_MM = 50;
 
-// Si durante el recovery de vuelta ya quedó orientado,
-// no espera todo el timer.
 const int RECOVERY_TURN_FINISH_ERROR = turnFinishError + 2;
 
-// Si el robot tarda más que esto intentando completar la vuelta,
-// se asume que no tuvo espacio suficiente y retrocede para reintentar.
 elapsedMillis turnTimer;
 const uint32_t TURN_FAIL_TIME_MS = 1400;
 
@@ -106,30 +109,19 @@ OpenMVBlob camBlob;
 const int CAM_WIDTH = 320;
 const int CAM_CENTER_X = 160;
 
-// Asumimos que la cámara ve aproximadamente de -30 a +30 grados.
-// Si tu lente/ROI cambia, ajusta este valor.
 const float CAM_HALF_FOV_DEG = 30.0f;
 
-// Si al probar corrige al lado contrario, cambia esto a true.
 const bool CAM_INVERT_X = false;
 
-// Según tu código OpenMV:
-// thresholds[0] = rojo  -> ID 1
-// thresholds[1] = verde -> ID 2
 const uint8_t COLOR_RED = 1;
 const uint8_t COLOR_GREEN = 2;
 
-// Offset de evasión
 const int PASS_OFFSET_DEG = 30;
-
-// Zona muerta para evitar correcciones por ruido cerca del centro
 const int VISION_DEAD_ZONE_DEG = 20;
 
-// Límite máximo de corrección
 const int MAX_VISION_CORRECTION_DEG = 60;
 const int CORR_KP = 4;
 
-// Timeout para no usar un blob viejo
 elapsedMillis lastCamPacket;
 const uint32_t CAM_TIMEOUT_MS = 300;
 
@@ -229,7 +221,6 @@ bool readOpenMVPacket(HardwareSerial &port, OpenMVBlob &blob) {
                 break;
 
             case 1:
-                // color_id, xL, xH, yL, yH
                 buffer[index++] = c;
 
                 if (index >= 5) {
@@ -287,18 +278,11 @@ int getVisionTargetIMU() {
     float correction = 0.0f;
 
     if (camBlob.colorId == COLOR_GREEN) {
-        // Verde se pasa por la izquierda.
-        // Según tu lógica:
-        // Verde en -30 está mal -> aplicar offset -30 -> objetivo -60.
-        // Verde en +30 ya está bien -> no corregir.
         if (blobAngle > -VISION_DEAD_ZONE_DEG) {
             correction = blobAngle + PASS_OFFSET_DEG;
         }
     }
     else if (camBlob.colorId == COLOR_RED) {
-        // Rojo se pasa por la derecha.
-        // Rojo en +30 está mal -> aplicar offset +30 -> objetivo +60.
-        // Rojo en -30 ya está bien -> no corregir.
         if (blobAngle < VISION_DEAD_ZONE_DEG) {
             correction = blobAngle - PASS_OFFSET_DEG;
         }
@@ -362,10 +346,6 @@ void startRecoveryReverse(bool retryTurn) {
 
     resetWallConfirmTimers();
 
-    // Ahora la recuperación invierte el último comando real del servo.
-    // 60 -> 120
-    // 90 -> 90
-    // 120 -> 60
     recoveryServoCmd = getInvertedServoCmd();
 
     writeServoCmd(recoveryServoCmd);
@@ -424,36 +404,67 @@ void updateRecoveryReverse(int imuRead) {
 
     resetWallConfirmTimers();
 
-    // Cambio importante:
-    // Solo para recovery de vuelta de pared.
-    // Si el robot ya se orientó, ya no espera todo RECOVERY_REVERSE_TIME_MS.
-    // Pasa directo al retroceso normal posterior a la vuelta.
     if (recoveryTurnAlreadyAligned(imuRead)) {
         finishWallTurnFromRecovery();
         return;
     }
 
-    // Si no se orientó antes, mantiene la lógica anterior.
     if (recoveryTimer >= RECOVERY_REVERSE_TIME_MS) {
         if (retryTurnAfterRecovery) {
-            // Recovery de vuelta de pared:
-            // terminó el tiempo, vuelve a intentar la misma vuelta.
             finishRecoveryAndRetrySameTurn();
         } else {
-            // Recovery de pilar:
-            // se queda igual que antes, usando timer fijo.
             finishPillarRecovery();
         }
     }
 }
 
-void startTurnLeft() {
-    setPointIMU = wrap180(setPointIMU + 90);
+void startTurnByDirection() {
+    setPointIMU = wrap180(setPointIMU + (90 * turnDirection));
     turning = true;
     turnArmed = false;
     turnTimer = 0;
 
     resetWallConfirmTimers();
+}
+
+void startDirectionChoice() {
+    choosingDirection = true;
+    directionChoiceTimer = 0;
+    turnArmed = false;
+
+    motorStop();
+    writeServoCmd(servoCenter);
+
+    resetWallConfirmTimers();
+
+    tone(BUZZER, 1100, 100);
+}
+
+void finishDirectionChoiceAndStartTurn() {
+    choosingDirection = false;
+    directionChosen = true;
+
+    if (left >= right) {
+        turnDirection = 1;   // antihorario, vueltas a la izquierda
+        tone(BUZZER, 1500, 100);
+    } else {
+        turnDirection = -1;  // horario, vueltas a la derecha
+        tone(BUZZER, 700, 100);
+    }
+
+    startTurnByDirection();
+    turnCount++;
+}
+
+void updateDirectionChoice() {
+    motorStop();
+    writeServoCmd(servoCenter);
+
+    resetWallConfirmTimers();
+
+    if (directionChoiceTimer >= DIRECTION_CHOICE_WAIT_MS) {
+        finishDirectionChoiceAndStartTurn();
+    }
 }
 
 void updateTurn(int yaw) {
@@ -474,13 +485,10 @@ bool turnLooksStuck(int imuRead) {
 
     int turnError = abs(angleErrorDeg(setPointIMU, imuRead));
 
-    // Si ya casi terminó la vuelta, no tiene sentido activar recuperación.
     if (turnError <= turnFinishError + 2) {
         return false;
     }
 
-    // Si durante el giro sigue muy cerca de la pared frontal durante demasiado tiempo,
-    // probablemente no tuvo espacio para completar la vuelta.
     if (front < frontTurnThreshold && turnTimer >= TURN_FAIL_TIME_MS) {
         return true;
     }
@@ -493,13 +501,11 @@ void updateTurnCondition(int imuRead) {
 
     bool pillarVisible = hasFreshBlob();
 
-    // Si la OpenMV ve un pilar, no se puede confirmar pared.
     if (pillarVisible) {
         resetWallConfirmTimers();
         return;
     }
 
-    // Si el frente ya no está cerca, se cancela la confirmación de pared.
     if (front >= frontTurnThreshold) {
         wallConfirmTimer = 0;
         return;
@@ -513,9 +519,13 @@ void updateTurnCondition(int imuRead) {
         noPillarConfirmed &&
         abs(baseHeadingError) < 10) {
 
-        startTurnLeft();
-        turnCount++;
-        tone(BUZZER, 1500, 100);
+        if (!directionChosen) {
+            startDirectionChoice();
+        } else {
+            startTurnByDirection();
+            turnCount++;
+            tone(BUZZER, 1500, 100);
+        }
     }
 }
 
@@ -531,9 +541,9 @@ void setup() {
 
     Serial.begin(115200);
 
-    Serial4.begin(115200);     // IMU
-    Serial5.begin(2000000);    // TOF
-    Serial3.begin(115200);     // OpenMV
+    Serial4.begin(115200);
+    Serial5.begin(2000000);
+    Serial3.begin(115200);
 
     pixels.begin();
     pixels.clear();
@@ -607,23 +617,17 @@ void loop() {
         Serial.print(" Front: ");
         Serial.print(front);
 
-        Serial.print(" Pillar: ");
-        Serial.print(hasFreshBlob());
+        Serial.print(" Left: ");
+        Serial.print(left);
 
-        Serial.print(" WallConfirm: ");
-        Serial.print((uint32_t)wallConfirmTimer);
+        Serial.print(" Right: ");
+        Serial.print(right);
 
-        Serial.print(" NoPillar: ");
-        Serial.print((uint32_t)noPillarTimer);
+        Serial.print(" DirectionChosen: ");
+        Serial.print(directionChosen);
 
-        Serial.print(" Turning: ");
-        Serial.print(turning);
-
-        Serial.print(" TurnTimer: ");
-        Serial.print((uint32_t)turnTimer);
-
-        Serial.print(" Recovering: ");
-        Serial.println(recovering);
+        Serial.print(" TurnDirection: ");
+        Serial.println(turnDirection);
         */
     }
 
@@ -635,9 +639,13 @@ void loop() {
         return;
     }
 
-    // Recuperación corta.
-    // Pilar: timer fijo.
-    // Vuelta de pared: puede salir antes si ya se orientó.
+    if (choosingDirection) {
+        updateDirectionChoice();
+        pixels.setPixelColor(0, pixels.Color(20, 20, 50));
+        pixels.show();
+        return;
+    }
+
     if (recovering) {
         updateRecoveryReverse(imuRead);
         pixels.setPixelColor(0, pixels.Color(50, 20, 0));
@@ -645,8 +653,6 @@ void loop() {
         return;
     }
 
-    // Pilar demasiado cerca:
-    // retrocede corto y luego vuelve a intentar evasión normal.
     if (!turning && !reversing && pillarTooClose()) {
         startRecoveryReverse(false);
         pixels.setPixelColor(0, pixels.Color(50, 20, 0));
@@ -654,7 +660,6 @@ void loop() {
         return;
     }
 
-    // Retroceso después de terminar un giro completo.
     if (reversing) {
         writeServoCmd(servoCenter);
         motorReversePWM(reversePWM);
@@ -665,7 +670,6 @@ void loop() {
             reversing = false;
             motorStop();
 
-            // No se rearma inmediatamente si todavía está viendo pared.
             if (front > frontTurnThreshold + 100) {
                 turnArmed = true;
             }
@@ -674,12 +678,10 @@ void loop() {
         return;
     }
 
-    // Rearmar giro cuando el frente esté despejado.
     if (!turning && front > frontTurnThreshold + 100) {
         turnArmed = true;
     }
 
-    // Giro de 90 grados con IMU.
     if (turning) {
         motorForwardPWM(turnPWM);
 
@@ -688,7 +690,6 @@ void loop() {
         bool wasTurning = turning;
         updateTurn(imuRead);
 
-        // Si intentó girar pero no tiene espacio, retrocede corto y reintenta la misma vuelta.
         if (turnLooksStuck(imuRead)) {
             startRecoveryReverse(true);
             pixels.setPixelColor(0, pixels.Color(50, 20, 0));
@@ -707,15 +708,10 @@ void loop() {
         return;
     }
 
-    // Movimiento normal con evasión por cámara.
-    // NO se cambió la lógica de evasión.
     int visionTarget = getVisionTargetIMU();
     updateHeadingSteering(imuRead, visionTarget);
     motorForwardPWM(60);
 
-    // Condición de giro:
-    // Solo gira si front detecta algo cerca,
-    // pero OpenMV NO está viendo un pilar por un tiempo.
     updateTurnCondition(imuRead);
 
     if (newTof) {

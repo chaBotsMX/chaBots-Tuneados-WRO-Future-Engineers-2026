@@ -24,17 +24,17 @@ IMU imu;
 Encoder motorEnc(ENCA, ENCB);
 Adafruit_NeoPixel pixels(1, 22, NEO_GRB + NEO_KHZ800);
 
-int setPointWall = 200;     // mm a la pared derecha
+int setPointWall = 300;     // mm a la pared seguida
 int setPointIMU  = 0;       // heading deseado en rango -180..180
 
 const int servoCenter = 90;
 
 // Ganancias
 float kpWall = 0.25f;
-float kpIMU  = 0.45f;
+float kpIMU  = 0.55f;
 float kpTurn = 1.50f;
 
-float kdWall = 0.25f;
+float kdWall = 0.15f;
 float kdIMU  = 0.25f;
 
 float lastErrorIMU  = 0.0f;
@@ -51,14 +51,24 @@ const int servoMax = 120;
 const int frontTurnThreshold = 600;   // mm para comenzar giro
 const int turnFinishError    = 10;    // grados tolerancia de fin de giro
 
-// Validación pared derecha
-const int rightMinValid = 0;
-const int rightMaxValid = 2000;
-const int maxWallError  = 200;
+// Validación pared
+const int wallMinValid = 0;
+const int wallMaxValid = 2000;
+const int maxWallError = 300;
+
+elapsedMillis finalTimer;
+bool finalAdvanceStarted = false;
+
+// Filtro de salto de pared.
+// Antes de saber el sentido, si la pared seguida brinca mucho,
+// se ignora la pared y se usa solo IMU.
+const int WALL_JUMP_THRESHOLD_MM = 1000;
+uint16_t lastWallDistForJump = 0;
+bool lastWallDistValidForJump = false;
 
 // Velocidades máximas
-const int maxPWM = 200;
-const int minPWM = 90;
+const int maxPWM = 130;
+const int minPWM = 70;
 
 // Filtro de TOF
 const uint16_t TOF_MAX_VALID_MM = 3000;
@@ -78,6 +88,17 @@ int outError = 0;
 const int rP = 4;
 int turnCount = 0;
 
+// Selección automática de sentido
+bool directionChosen = false;
+bool choosingDirection = false;
+elapsedMillis directionChoiceTimer;
+
+const uint32_t DIRECTION_CHOICE_WAIT_MS = 1000;
+
+// +1 = antihorario, gira izquierda, sigue pared derecha
+// -1 = horario, gira derecha, sigue pared izquierda
+int turnDirection = 1;
+
 int wrap180(int ang) {
     while (ang > 180)  ang -= 360;
     while (ang <= -180) ang += 360;
@@ -90,6 +111,23 @@ int angleErrorDeg(int target, int current) {
 
 int32_t getEncoderTicks() {
     return motorEnc.read();
+}
+
+void motorForwardPWM(int pwm) {
+    digitalWrite(INA, LOW);
+    digitalWrite(INB, HIGH);
+    analogWrite(PWM, constrain(pwm, 0, 255));
+}
+
+void motorStop() {
+    digitalWrite(INA, LOW);
+    digitalWrite(INB, LOW);
+    analogWrite(PWM, 0);
+}
+
+void resetWallJumpFilter() {
+    lastWallDistForJump = 0;
+    lastWallDistValidForJump = false;
 }
 
 void syncEstimateFromCurrentDistances() {
@@ -169,7 +207,62 @@ bool readTOFPacket(HardwareSerial &port, uint16_t &front, uint16_t &left, uint16
     return false;
 }
 
-void updateSteering(int yaw, uint16_t rightDist) {
+bool followingLeftWall() {
+    return directionChosen && turnDirection == -1;
+}
+
+uint16_t getFollowWallDistance() {
+    if (followingLeftWall()) {
+        return left;
+    }
+
+    return right;
+}
+
+int getWallServoSign() {
+    // Pared derecha:
+    // Si está lejos de la pared derecha, errorWall positivo debe mandar servo hacia la derecha.
+    // En este robot eso corresponde a restar wallTerm.
+    //
+    // Pared izquierda:
+    // Si está lejos de la pared izquierda, errorWall positivo debe mandar servo hacia la izquierda.
+    // En este robot eso corresponde a sumar wallTerm.
+    if (followingLeftWall()) {
+        return +1;
+    }
+
+    return -1;
+}
+
+bool wallDistanceAllowedForSteering(uint16_t wallDist) {
+    // Caso especial antes de saber el sentido.
+    // Al inicio se sigue la derecha. Si en realidad el sentido correcto era horario,
+    // puede perder esa pared y brincar de ~200 a valores grandes.
+    // En ese caso se usa solo IMU para evitar un giro brusco.
+    if (!directionChosen) {
+        if (lastWallDistValidForJump) {
+            int jump = abs((int)wallDist - (int)lastWallDistForJump);
+
+            if (jump > WALL_JUMP_THRESHOLD_MM) {
+                return false;
+            }
+        }
+
+        // Solo actualizamos la referencia si la lectura parece usable.
+        if (wallDist >= wallMinValid && wallDist <= wallMaxValid) {
+            lastWallDistForJump = wallDist;
+            lastWallDistValidForJump = true;
+        }
+    }
+
+    if (wallDist < wallMinValid || wallDist > wallMaxValid) {
+        return false;
+    }
+
+    return true;
+}
+
+void updateSteering(int yaw) {
     errorIMU = angleErrorDeg(setPointIMU, yaw);
 
     float dtIMU = max(1.0f, (float)lastReadIMU);
@@ -179,15 +272,18 @@ void updateSteering(int yaw, uint16_t rightDist) {
     lastReadIMU = 0;
 
     float wallTerm = 0.0f;
+    uint16_t wallDist = getFollowWallDistance();
 
-    if (rightDist >= rightMinValid && rightDist <= rightMaxValid) {
+    bool useWall = wallDistanceAllowedForSteering(wallDist);
+
+    if (useWall) {
         float limitedAngle = constrain((float)errorIMU, -35.0f, 35.0f);
         float theta = radians(limitedAngle);
 
         // Distancia perpendicular corregida
-        float rightCorrected = (float)rightDist * cos(theta);
+        float wallCorrected = (float)wallDist * cos(theta);
 
-        int errorWall = (int)rightCorrected - setPointWall;
+        int errorWall = (int)wallCorrected - setPointWall;
         errorWall = constrain(errorWall, -maxWallError, maxWallError);
 
         float wallWeight = 1.0f - min(abs(errorIMU) / 40.0f, 1.0f);
@@ -199,23 +295,73 @@ void updateSteering(int yaw, uint16_t rightDist) {
 
         lastErrorWall = errorWall;
         lastReadWall = 0;
+    } else {
+        // Solo IMU.
+        // También evitamos que el derivativo de pared guarde un error viejo.
+        lastErrorWall = 0.0f;
+        lastReadWall = 0;
     }
-    if(wallTerm > 30){
-        int servoCmd = constrain((int)(servoCenter - wallTerm), servoMin, servoMax);
-        outError = abs(90 - (servoCmd) *2);
+
+    int wallServoSign = getWallServoSign();
+
+    if (useWall && wallTerm > 30) {
+        int servoCmd = constrain((int)(servoCenter + wallServoSign * wallTerm), servoMin, servoMax);
+        outError = abs(90 - servoCmd);
         servo.write(servoCmd);
     }
-    else{
-    int servoCmd = constrain((int)(servoCenter + imuTerm - wallTerm), servoMin, servoMax);
-    outError = abs(90 - servoCmd);
-    servo.write(servoCmd);
+    else {
+        int servoCmd = constrain((int)(servoCenter + imuTerm + wallServoSign * wallTerm), servoMin, servoMax);
+        outError = abs(90 - servoCmd);
+        servo.write(servoCmd);
     }
 }
 
-void startTurnLeft() {
-    setPointIMU = wrap180(setPointIMU + 90);
+void startTurnByDirection() {
+    setPointIMU = wrap180(setPointIMU + (90 * turnDirection));
     turning = true;
     turnArmed = false;
+
+    resetWallJumpFilter();
+}
+
+void startDirectionChoice() {
+    choosingDirection = true;
+    directionChoiceTimer = 0;
+    turnArmed = false;
+
+    motorStop();
+    servo.write(servoCenter);
+
+    resetWallJumpFilter();
+
+    tone(BUZZER, 1100, 100);
+}
+
+void finishDirectionChoiceAndStartTurn() {
+    choosingDirection = false;
+    directionChosen = true;
+
+    if (left >= right) {
+        turnDirection = 1;   // antihorario: gira izquierda y sigue pared derecha
+        tone(BUZZER, 1500, 100);
+    } else {
+        turnDirection = -1;  // horario: gira derecha y sigue pared izquierda
+        tone(BUZZER, 700, 100);
+    }
+
+    resetWallJumpFilter();
+
+    startTurnByDirection();
+    turnCount++;
+}
+
+void updateDirectionChoice() {
+    motorStop();
+    servo.write(servoCenter);
+
+    if (directionChoiceTimer >= DIRECTION_CHOICE_WAIT_MS) {
+        finishDirectionChoiceAndStartTurn();
+    }
 }
 
 void updateTurn(int yaw) {
@@ -232,7 +378,7 @@ void updateTurn(int yaw) {
 int calcSpeed() {
     if (!turning) {
         int reductionError = outError * rP;
-        float disVel = constrain(front / 2000.0f, 0.0f, 1.0f) * 100.0f;
+        float disVel = constrain(front / 2000.0f, 0.0f, 1.0f) * 70.0f;
         int outSpeed = 100 + (int)disVel - reductionError;
         return constrain(outSpeed, minPWM, maxPWM);
     } else {
@@ -284,6 +430,7 @@ void loop() {
             pixels.setPixelColor(0, pixels.Color(0, 0, 0));
         }
         pixels.show();
+        Serial.println(front);
     }
 
     imu.update();
@@ -301,37 +448,65 @@ void loop() {
         syncEstimateFromCurrentDistances();
     }
 
+    if (choosingDirection) {
+        updateDirectionChoice();
+
+        pixels.setPixelColor(0, pixels.Color(20, 20, 50));
+        pixels.show();
+
+        return;
+    }
+
     // Rearmar el giro solo cuando el frente vuelva a estar despejado
     if (front > frontTurnThreshold + 100) {
         turnArmed = true;
     }
 
     // Motor hacia adelante
-    digitalWrite(INA, LOW);
-    digitalWrite(INB, HIGH);
-    analogWrite(PWM, calcSpeed());
+    motorForwardPWM(calcSpeed());
 
     if (finish == 1) {
-        digitalWrite(INA, LOW);
-        digitalWrite(INB, LOW);
-        analogWrite(PWM, 0);
+        motorStop();
     }
     else if (turnCount == 12 && !turning) {
-        if (front > 1500) {
-            updateSteering(imuRead, right);
-        } else {
+        if (!finalAdvanceStarted) {
+            finalTimer = 0;
+            finalAdvanceStarted = true;
+        }
+
+        if (finalTimer < 1500) {
+            updateSteering(imuRead);
+            motorForwardPWM(calcSpeed());
+        }
+        else {
             finish = 1;
         }
     }
     else if (!turning) {
-        updateSteering(imuRead, right);
+        updateSteering(imuRead);
 
         if (turnArmed && front < frontTurnThreshold && abs(errorIMU) < 10) {
-            startTurnLeft();
-            turnCount++;
-            tone(BUZZER,1500,100);
+            if (!directionChosen) {
+                startDirectionChoice();
+            } else {
+                startTurnByDirection();
+                turnCount++;
+                tone(BUZZER, 1500, 100);
+            }
         }
     } else {
         updateTurn(imuRead);
     }
+
+    if (newTof) {
+        if (followingLeftWall()) {
+            pixels.setPixelColor(0, pixels.Color(50, 0, 50));   // siguiendo izquierda
+        } else {
+            pixels.setPixelColor(0, pixels.Color(0, 0, 50));    // siguiendo derecha
+        }
+    } else {
+        pixels.setPixelColor(0, pixels.Color(0, 0, 0));
+    }
+
+    pixels.show();
 }
