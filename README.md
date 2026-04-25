@@ -1,5 +1,4 @@
 
-
 # ChaBots - WRO Future Engineers 2026
 
 <!--<img src="https://github.com/chaBotsMX/chaBots-NERV-WRO-Future-Engineers-2025/blob/docs-nacional/v-photos/resources/ChaBotsLogo.png?raw=true" width="250">-->
@@ -23,7 +22,7 @@
     <img src="https://cdn-icons-png.flaticon.com/512/841/841364.png" width="40" alt="Website">
   </a>
 
-This repository contains the documentation for **ChaBots** participation in the **WRO Future Engineers 2025** category. Our robot was designed and built by a Mexican students team,  passionate about robotics and education.
+This repository contains the documentation for **ChaBots** participation in the **WRO Future Engineers 2026** category. Our robot was designed and built by a Mexican students team,  passionate about robotics and education.
 
 
 ## 📜 Table of Contents
@@ -45,7 +44,7 @@ This repository contains the documentation for **ChaBots** participation in the 
 
 ## 1. The Team <a name="the-team"></a>
 <div align="center">
-<img src="https://github.com/chaBotsMX/chaBots-NERV-WRO-Future-Engineers-2025/blob/photos/t-photos/t-photo.png?raw=true">
+<img src="">
 </div>
 <div align="center">
     <h2 style="color:#1e90ff; font-size:2.2em; margin-top:0.5em; margin-bottom:0.2em;">
@@ -67,7 +66,7 @@ I am a self-taught robotics enthusiast with experience in embedded systems, soft
 **Age:** 21\
 **Role:** Mechanical Designer
 
-I am a Mechatronics Engineering student passionate about technology and innovation. I have been a contestant for eight years, winning various regional and national competitions, and participating internationally.
+| am a Mechatronics Engineering student passionate about technology and innovation. I have been a contestant for eight years, winning various regional and national competitions, and participating internationally.
 > "I will take any opportunity to grow"
 
 ---
@@ -75,10 +74,10 @@ I am a Mechatronics Engineering student passionate about technology and innovati
 ### Hugo Iván Guerrero Díaz
 **Age:** 19\
 **Role:** Electronics Designer
+I am a Mechanical Engineering student that has been participating in robotics competitions since 2019. I won at the RoboCup Mexican Open and represented Mexico at the international RoboCup event in Brazil.
 
-...
 
-> "..."
+> "No."
 
 ---
 
@@ -114,34 +113,20 @@ For more indo visit: [WRO Official Site](https://wro-association.org/)
 
 ### 3.1. Decisions
 
-...
-
-#### Hardware Selection Rationale
-
-**TOF**:..
+We have decided to create a robot with a reduced size, as compact as possible to be able to maneuver more easily and avoid obstacles without further complication. For this reason, we decided to use TOF sensors instead of lidar, as they take up much less space and have several advantages over lidar. Similarly, we decided against using an OTOS and instead opted for a motor with an encoder to determine the robot's position.
 
 ### 3.2. Rebuilding the System
 
-#### What We Rebuilt
+**New Steering System**:
+- The steering system was redesigned to be much more compact, and the angles were calculated to make it an Ackermann steering system, so that it has a much smaller turning radius without the wheels slipping.
 
-**Complete Software Stack**:
-- ..
-
-**Hardware Redesign**:
-- ...
+**New PCBs**:
+- We decided to have a main PCB to which all the robot's peripherals are connected.
 
 **Testing Infrastructure**:
 - Built a complete testing environment that simulates competition conditions
 - Developed automated testing scripts for regression testing
 - Created comprehensive calibration procedures
-
-### 3.3. Technical Achievements
-
-...
-
-### 3.4. Competition Strategy
-
-...
 
 ---
 
@@ -178,46 +163,56 @@ For more indo visit: [WRO Official Site](https://wro-association.org/)
 
 ## 5. Sense Overview <a name="sense-overview"></a>
 
-### 5.1. RPLiDAR C1
-360° laser scanner for environmental mapping and obstacle detection.
+### 5.1.  Pololu VL53L8CX
+
 <div>
-  <img src="https://github.com/user-attachments/assets/6e67d0ac-5d60-4c0c-aa2a-dc37211ad280" height="350">
+  <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/other-components/tof-vl53l8cx.png?raw=true">
 </div>
 
 **Tech specs:**
-- 360° scanning with 0.9° resolution
-- Up to 8m range with 10Hz update rate
-- Quality filtering for reliable data
-- ROS2 integration via `rplidar_ros` package
 
-**Link:** [RPLiDAR C1](https://www.slamtec.com/en/C1)
+-  8×8 Multizone detection: Capability to output a 64-zone depth map with a wide 65° diagonal field of view (FoV).
+- Extended range:  Accurate distance measurement up to 400 cm (4 meters) across all zones.
+    
+-  High-speed sampling:  Operates at frequencies up to 60 Hz for real-time motion tracking.
+    
+-  Integrated voltage regulation:  Onboard regulators and level shifters allowing a wide input voltage range (3.2V to 5V).
+    
+-   Ambient light immunity:  Advanced silicon-on-insulator (SOI) technology for consistent performance under indoor and outdoor lighting.
+    
+-   Programmable features:  Configurable regions of interest (ROI) and autonomous low-power modes for energy efficiency.
+    
+-  Communication interface:  Supports  I2C  (up to 1 MHz) and SPI (up to 3 MHz) for high-bandwidth data transfer.
+    
+-   Motion indicator:  Built-in motion detection algorithm to identify movement within each specific zone.
 
-### 5.2. Raspberry Pi Camera V3
-High-resolution camera for color object detection.
+**Link:** [VL53L8CX](https://www.pololu.com/product/3419)
+
+### 5.2. OpenMV H7
 
 <div>
-  <img src="https://github.com/user-attachments/assets/aeb8fb7f-716d-4731-aa02-60a23a4a5158" height="350">
+  <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/other-components/camera-H7.png?raw=true">
 </div>
 
 **Tech specs:**
-- 12MP IMX708 Quad Bayer sensor and features a High Dynamic Range mode
-- Supports 1080p30, 720p60, and VGA90 video modes
 
-**Link:** [Raspberry Pi Camera V3](https://www.raspberrypi.com/products/camera-module-3/)
+-  High-performance MCU:  STM32H743VI ARM Cortex-M7 processor running at 480 MHz with 1MB of RAM and 2MB of flash.
+    
+-  Integrated Image Sensor:  Features the OV7725 sensor capable of capturing 640x480 (VGA) images at 75 FPS.
+    
+-  Advanced Vision Support:  Native hardware acceleration for color tracking, face detection, QR/barcode decoding, and optical flow.
+    
+-  Expandable Storage:  Integrated microSD card socket supporting high-speed UHS-I transfers for image and data logging.
+    
+-  Versatile I/O:  Comprehensive set of pins including SPI,  I2C, USART, PWM, and 12-bit ADC/DAC for peripheral interfacing.
+    
+-  Machine Learning Ready:  Optimized for running quantized neural networks via TensorFlow Lite for Microcontrollers.
+    
+-  RGB LED and Flash:  Built-in high-intensity RGB LED and two high-power IR LEDs for night vision or low-light conditions.
+    
+-  Python Programmability:  Fully programmable via MicroPython, allowing for rapid prototyping and real-time script execution.
 
-### 5.3. SparkFun Optical Tracking Odometry Sensor
-High-precision odometry sensor for accurate position tracking.
-
-<div>
-  <img src="https://github.com/user-attachments/assets/f2fa519e-0818-484d-805f-129e02615010" height="350">
-</div>
-
-**Tech specs:**
-- Measures linear and angular displacement
-- High-resolution optical flow sensor
-- ROS2 integration via custom `otos_reader` node
-
-**Link:** [SparkFun OTOS](https://www.sparkfun.com/sparkfun-optical-tracking-odometry-sensor-paa5160e1-qwiic.html)
+**Link:** [OpenMV H7](https://openmv.io/products/openmv-cam-h7?srsltid=AfmBOoo6sZCCZkX54ofHCneaBRR4oAl444A5ZMhdEFs70Z3Cm0ei3gXx)
 
 ---
 
