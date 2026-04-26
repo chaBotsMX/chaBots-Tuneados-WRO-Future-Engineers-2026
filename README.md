@@ -1,4 +1,3 @@
-
 # ChaBots - WRO Future Engineers 2026
 
 <!--<img src="https://github.com/chaBotsMX/chaBots-NERV-WRO-Future-Engineers-2025/blob/docs-nacional/v-photos/resources/ChaBotsLogo.png?raw=true" width="250">-->
@@ -285,11 +284,130 @@ The steering system is mounted on the chassis using 20mm-high M3 posts. The gear
 
 ---
 
-## 8. Electronics <a name="electronics"></a>
+## 7. Electronics <a name="electronics"></a>
 
-...
 
-## Microcontroller comparison
+## 7.1.1 Precision Improvements
+
+### Distance Sensing Upgrade
+
+We transitioned from the **RPLIDAR C1 Lidar Sensor** to four **VL53L8CX Time-of-Flight (ToF) sensors**.
+
+-   **RPLIDAR C1**
+    -   360° field of view
+    -   Maximum frequency: ~10 Hz (practically ~5 Hz usable)
+    -  	Minimum sensing distance: ~5 cm
+-   **VL53L8CX (x4)**
+    -   Narrow field of view (~45° per sensor, depending on configuration)
+    -  	Minimum sensing distance: ~5 cm
+    -   8×8 zone depth grid per sensor
+    -   Maximum frequency: 60 Hz (practically ~50 Hz usable)
+    
+    -   Very compact form factor
+
+While the LIDAR provided full 360° environmental coverage, the ToF sensors have a significantly narrower field of view, making their coverage comparatively limited. However, by strategically placing multiple sensors surrounding the robot and leveraging their much higher refresh rate, the overall system achieves faster and more responsive distance measurements. In our use case, the reduced field of view is almost negligible compared to the gain in update speed and reliability.
+
+----------
+
+
+
+## 7.1.2 Size and Compactness
+
+A major constraint this year was the significantly smaller robot frame.
+
+-   A custom PCB was designed and reduced to **8 × 8 cm**
+-   The design evolved from **multiple PCBs** to a **single integrated board**, simplifying wiring and reducing failure points
+-   This is our **first full single-board implementation**, representing a major step forward in system integration
+
+Initially, the PCB was intended to occupy the robot base. However, due to mechanical constraints and limited usable space, the design was changed to a **top-mounted configuration**.
+
+This resulted in:
+
+-   More efficient use of space
+-   Reduced wiring complexity
+-   A cleaner and more organized layout
+
+----------
+
+## 7.1.3 Serviceability Improvements
+
+Mounting the PCB on top of the robot significantly improved accessibility:
+
+-   All components are now **fully accessible**, including:
+    -   Microcontrollers
+    -   Sensors
+    -   Power systems
+
+This allows for:
+
+-   Faster repairs and adjustments
+-   Easier testing and iteration
+-   Reduced downtime during development
+
+----------
+
+## 7.1.4 Debugging and Feedback Systems
+
+### Previous Year
+
+-   Required an external monitor via HDMI to interface with the Raspberry Pi 5
+-   Bulky and inefficient for rapid testing
+
+### Current System
+
+We implemented multiple onboard debugging and feedback tools:
+
+-   **Buzzer** → audible system feedback
+-   **Programmable RGB LED** → system state indication
+-   **Dedicated indicator LEDs** for:
+    -   Motor driver
+    -   Servo activity
+    -   Power (ON state)
+
+Additionally:
+
+-   The **OpenMV camera** can be connected via **Micro USB**
+-   Full debugging and calibration is done through the **OpenMV IDE** on a laptop
+
+### Wireless Debugging (Development Only)
+
+We also integrated an **XIAO C6 microcontroller** for **wireless debugging during development**:
+
+-   Provides live telemetry and sensor data
+-   Enables real-time monitoring without physical connections
+-   Used **only during programming and testing**, not during official competition runs
+
+This greatly improves development speed while keeping the competition system simple and reliable.
+
+----------
+
+## 7.1.5 IMU Upgrade
+
+We upgraded from the **BNO055** to the **BNO085**.
+
+### Improvements:
+
+-   Communication switched from **I2C → UART**
+    -   More robust and reliable communication
+-   Significantly reduced drift
+-   Minimal calibration required for our use case
+
+Although UART integration is slightly more complex, the reliability improvements justified the change.
+
+----------
+
+## Summary
+
+This year’s electronics system represents a major step forward in:
+
+-   **High-speed sensing and responsiveness**
+-   **Compact, single-board design**
+-   **Improved accessibility and serviceability**
+-   **Efficient and modern debugging tools**
+
+The system is also designed with **future upgrades in mind**, particularly the easy transition to the OpenMV N6 once firmware limitations are resolved.
+
+## 7.2.1 Microcontroller Selection
 
 
 |MCU  |Clock speed |  Observed PWM behavior*
@@ -297,130 +415,138 @@ The steering system is mounted on the chassis using 20mm-high M3 posts. The gear
 | Teensy 4.0 | 600 MHz |Excellent|
 |Arduino Nano|16 MHz|Good|
 |Raspberry Pi Pico|133 MHz|Inconsistent at low duty|
+|Seeed Xiao C6|120 MHz|Good + BLE|
 
 
 *Notes on PWM behavior: Using the same nominal PWM frequency across all three MCUs, we observed different motor responses. On the Teensy 4.0, the motor starts smoothly and can deliver more torque at lower duty cycles. The Raspberry Pi Pico struggled at very low speeds and required careful tuning. The Arduino Nano behaved as expected for an AVR‑based board. We could not find definitive documentation explaining these differences; our working theory is that PWM implementation details (SDK, drivers, timer resolution, and library quality) play a role. Teensy and Arduino platforms are primarily C/C++ with mature vendor‑maintained timer libraries, while typical Pico workflows often lean on MicroPython or community libraries, which may trade convenience for timing granularity.
 
-## Power architecture
+## 7.2.2 Power architecture
 
--   *Main battery:* 3S (11.1 V) *LiPo, ~2200 mAh*.
+-   *Main battery:* 3S (11.1 V) *LiPo, ~1000 mAh. Powers motor drivers and 5V regulator.
+-   *Regulation:* Pololu *S8V9F5*5V 1,5A Step-Up/Step-Down Voltage Regulator. Powers Teensy 4.0, Seeed Xiao C6, motor encoders, RGB LED and the servo. 
+- Both the Teensy 4.0 and Seeed Xiao C6 regulate 3.3V to interface with sensors
 
--   *Regulation:* Pololu *D42V55F5* step‑down regulator (5 V, up to 6 A) feeding the Raspberry Pi 5 and the servo.
+## 7.2.3 Motor driver
 
--   *Isolation:* The Teensy 4.0 is powered from an *isolated supply* to protect it from motor/EMI transients; all other subsystems draw from the main rail via appropriate regulators and filtering.
+We use the *VNH7070AS* full‑bridge driver. It comfortably handles the required current (≈5A continuous in our use case) and supports supply voltages above 20 V, providing generous headroom. Because there is no widely available off‑the‑shelf module for this device, we integrated it directly onto our PCB. This raises the bar for assembly, but the result is more reliable and, in practice, more cost‑effective.
+### Vision System Redesign
+
+Our vision systen is something we realy struggled with last year so we decided to move away from a **Raspberry Pi 5 + Camera Module v3** setup to a fully integrated microcontroller-based vision system.
+
+#### Camera Platforms Considered
 
 
-## Motor driver
+| Device | Processing Type | Approx. Current Draw | Max FPS | Notes |
+|--|--|--|--|--|
+| Raspberry Pi 5 + Camera V3 | SBC (Linux) | ~2–5 A @ 5V | ~60+ FPS | High performance, high power consumption |
+| OpenMV N6 (planned) | MCU | ~140–200 mA | ~240FPS | New, compact, efficient |
+| OpenMV H7 (used) | MCU | ~120–180 mA | ~80 FPS | Stable and well-supported |
+| MaixCam Lite (considered) | AI SoC | ~300–500 mA | ~60 FPS (sensor-limited) | Higher compute, limited documentation |
 
-We use the *VNH7070AS* full‑bridge driver. It comfortably handles the required current (≈8 A continuous in our use case) and supports supply voltages above 20 V, providing generous headroom. Because there is no widely available off‑the‑shelf module for this device, we integrated it directly onto our PCB. This raises the bar for assembly, but the result is more reliable and, in practice, more cost‑effective.
 
-## PCB design
+#### Final Decision
 
-Our PCB uses *6 layers*:
-|Layer  |Type  |
-|--|--|
-| 1 |Signal  |
-|2|GND
-|3|Signal
-|4|Signal
-|5|GND
-|6|GND
+-   The **OpenMV N6** was initially selected due to its:
+    -   Low power consumption
+    -   Small size
+    -   Simplified embedded workflow
+-   However, due to firmware limitations (manual exposure and white balance control not available), we transitioned to the **OpenMV H7**, which provided reliable and predictable performance.
+-   The **MaixCam Lite** was ultimately not used due to:
+    -   Limited documentation
+    -   Less mature ecosystem
+    -   Frame rate limitations imposed by its image sensor
 
-This stack‑up, combined with stitching vias, short return paths, and careful placement, yielded a robust, fully integrated board with *low EMI emissions. Despite having the motor as close as **5 cm* to sensitive wiring, we can communicate at high baud rates reliably.
+**Future Upgrade Path:**  
+The system is designed so that switching from the H7 to the N6 can be done almost instantly once stable firmware becomes available.
+
+----------
+
+## 7.2.4 Odometry System Redesign
+
+We transitioned away from the **SparkFun OTOS optical tracking sensor** due to reliability issues observed during testing:
+
+-   Significant drift over time
+-   Inconsistent readings depending on speed
+-   Failure to reliably detect movement at low speeds
+-   Poor accuracy at higher speeds
+
+These limitations made it unsuitable for precise and repeatable odometry.
+
+### New Approach
+
+We replaced the OTOS with a combined system using:
+
+-   **BNO085 IMU (UART)**
+-   **Pololu 25D motors with integrated encoders**
+
+This hybrid approach provides a much more reliable solution:
+
+-   **Encoders** → Accurate wheel-based distance measurement
+-   **BNO085** → Stable orientation tracking with minimal drift
+-   **Sensor fusion** → Improved overall position estimation
+
+### Results
+
+-   Consistent tracking across all speed ranges
+-   Reliable detection of small movements
+-   Significantly reduced drift compared to the previous system
+-   More predictable and tunable behavior
+
+This change resulted in a robust and competition-ready odometry system, better suited for precise navigation and control.
+
+
+## 7.2.5 PCB design
+
+For the first iteration of this robots PCB we opted for a simple 2 layer board, as it made it much easier to diagnose and fix any problems that might arise. However, by using ground pour on both layers combined with stitching vias, short return paths, and careful placement, we were able to produce a fully integrated board with low EMI emissions. Despite still having the motor as close as *5 cm* to sensitive wiring, we can still communicate at high baud rates reliably.
 
 <table style="width: 100%; table-layout: fixed;">
   <tr>
     <td>
-   The main PCB controls the motors and the servo. It includes a built-in full-bridge motor driver (VNH7070ASTR), an XT60 connector for direct battery input, and protection against overcurrent, overvoltage, surges, and reverse polarity. It also provides UART connections between the Teensy 4.0 and Raspberry Pi 5, plus a header for the servo pins.
+   The main PCB intrgrates two microcontrollers (Teensy 4.0 and Seeed Xiao C6),  a built-in full-bridge motor driver (VNH7070ASTR), servo control and all sensors. It includes , an XT30 connector for direct battery input, and protection against overcurrent, overvoltage, surges, and reverse polarity. 
     </td>
     <td>
-      <img src="https://github.com/chaBotsMX/chaBots-NERV-WRO-Future-Engineers-2025/blob/docs-international/schemes/pcb-main.jpeg?raw=true" style="width: 100%;">
-    </td>
-  </tr>
-  <tr>
-    <td>
-The odometry PCB provides a better mounting solution for our OTOS sensor. Because the sensor doesn’t have space for JST headers, this board serves as an intermediate adapter and offers a secure mechanical mount.
-    </td>
-    <td>
-      <img src="https://github.com/chaBotsMX/chaBots-NERV-WRO-Future-Engineers-2025/blob/docs-international/schemes/pcb-odometry.jpeg?raw=true" style="width: 100%;">
-    </td>
-  </tr>
-  <tr>
-    <td>
-The Raspberry Pi PCB is designed as a HAT. It offers a more robust way to manage connections than using loose DuPont leads: you can solder jumper wires to it, making the setup more reliable than DuPont jumpers alone.
-    </td>
-    <td>
-      <img src="https://github.com/chaBotsMX/chaBots-NERV-WRO-Future-Engineers-2025/blob/docs-international/schemes/pcb-rasp.jpeg?raw=true" style="width: 100%;">
+      <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Main-PCB.png" style="width: 100%;">
     </td>
   </tr>
 </table>
 
 ---
+## 7.3.1 Schematic details
 
-*Summary:* Separating real‑time control (Teensy 4.0) from high‑level compute (Raspberry Pi 5), providing clean power (isolated Teensy rail + regulated 5 V), and integrating an automotive‑grade driver (VNH7070AS) on a 6‑layer PCB gives us the responsiveness and robustness demanded by the challenge.
-
-## Schematic details
-
-Our PCB design is implemented across three specialized boards to maximize reliability and minimize electromagnetic interference:
-
-### Schematic Overview
-
+###  7.3.2 Schematic Overview
+ <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Full.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;">
 <table style="width: 100%; table-layout: fixed;">
   <tr>
     <td>
-      <h4>Main PCB</h4>
-      <img src="https://github.com/user-attachments/assets/37cf531e-884b-4197-9f4b-ac8e0524a3e2" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;">
-      <p style="font-size: 0.9em; margin-top: 0.5em;">Primary power distribution, motor driver (VNH7070AS), and system control.</p>
+      <h4> 7.3.3 Microcontrollers</h4>
+      <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Microcontrollers.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;">
+      <p style="font-size: 0.9em; margin-top: 0.5em;">Teensy 4.0 and Seeed Xiao C6 logic connexions.</p>
     </td>
   </tr>
   <tr>
     <td>
-      <h4>Odometry PCB</h4>
-      <img src="https://github.com/user-attachments/assets/a57949cb-582a-4894-92e9-1005c59148ba" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;">
-      <p style="font-size: 0.9em; margin-top: 0.5em;">OTOS sensor mount and signal conditioning.</p>
+      <h4> 7.3.4 Power Delivery</h4>
+      <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Power%20Delivery.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;">
+      <p style="font-size: 0.9em; margin-top: 0.5em;">Battery Conector XT30 , Slide Switch 6A 12V, Voltage Regulator S8V9F5 5V 1.5A, Filtered Servo Output and Motor Output. </p>
     </td>
   </tr>
   <tr>
     <td>
-      <h4>Raspberry Pi HAT</h4>
-      <img src="https://github.com/user-attachments/assets/09b86430-3fb3-458e-897e-d7f9e89d459a" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;">
-      <p style="font-size: 0.9em; margin-top: 0.5em;">Robust I/O connections and UART bridge for Pi.</p>
+      <h4> 7.3.5 Debugging</h4>
+      <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Debugging.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;">
+      <p style="font-size: 0.9em; margin-top: 0.5em;">Buzzer, On LED, Button and Programable LED.</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <h4>7.3.6 Sensors</h4>
+      <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Sensors.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;">
+      <p style="font-size: 0.9em; margin-top: 0.5em;">IDC conectors for our TOF sensors through I2C and Camera through UART. BNO085 mounted directly to PCB.</p>
     </td>
   </tr>
 </table>
 
-### 1) Battery input & primary protection
-
--   *Connector:* XT30 (U14/U19) for main power.
-
--   *Transient suppression:* TVS diodes on the input and 5 V rails (e.g., *SMBJ18* class at the battery side and *SMAJ5.0CA* on the 5 V rail) clamp surges from motor commutation and cable hot‑plugging.
-
--   *Input filtering:* Bulk electrolytic (≈*470 µF) plus local ceramics (100 nF*) provide low‑ and high‑frequency decoupling. Keep the electrolytic close to the power switch/step‑down input and sprinkle 100 nF near every IC supply pin.
-
--   *(Recommended)* Add a resettable fuse (polyfuse) sized for your continuous draw and an ideal‑diode OR high‑side FET for reverse‑polarity protection if you expect frequent battery swaps.
-
-
-### 2) Latching power switch (high‑side)
-
--   *Function:* A soft‑latching high‑side switch drives a low‑RDS(on) P‑channel MOSFET (*TPH1R712MDL*) to connect/disconnect the main rail.
-
--   *Control:* A momentary/toggle switch (*SW3*) biases a small driver network (Q3 + resistors) that pulls the MOSFET’s gate. The RC on the gate provides gentle inrush and reduces connector arcing.
-
--   *Why high‑side:* Keeps grounds common and only switches the positive rail, avoiding ground‑bounce issues with USB/UART connections to the PC.
-
-
-### 3) 5 V regulation rail (Raspberry Pi + servo)
-
--   *Module:* Pololu *D42V55F5* (5 V @ up to 6 A). Place it so that current from the battery flows battery → switch → regulator → loads.
-
--   *Post‑filtering:* An *LC section* (e.g., *L1 = 22 µH, **C9 ≈ 470 µF, plus **100 nF* ceramics) reduces switching ripple seen by the Pi and the servo.
-
--   *Surge/ESD:* A *SMAJ5.0CA* across the 5 V rail provides additional protection. Keep diode and bulk cap leads short and wide.
-
--   *Grounding:* Return the regulator ground straight to the *GND plane* and keep the high‑di/dt loop (switch → inductor → diode/cap → switch) as tight as possible.
-
-
-### 4) Teensy 4.0 section
+### 7.4.1 Teensy 4.0 section
 
 -   *Role:* Real‑time control (PWM generation, sensor timing, safety interlocks). The Pi handles high‑level logic/vision.
 
@@ -431,7 +557,7 @@ Our PCB design is implemented across three specialized boards to maximize reliab
 -   *Signal integrity:* If runs exceed ~10–15 cm, add *33–100 Ω* series resistors on digital lines (IN1/IN2/PWM) to damp edges and reduce ringing into the VNH driver.
 
 
-### 5) Motor driver stage (VNH7070AS)
+###  7.4.2 Motor driver stage (VNH7070AS)
 
 -   *Device:*  *VNH7070AS* integrated H‑bridge; internal MOSFETs handle current spikes and integrate flyback paths.
 
@@ -444,7 +570,7 @@ Our PCB design is implemented across three specialized boards to maximize reliab
 -   *Thermal:* Provide a solid copper pour under the thermal pad with many *thermal vias* to GND to spread heat to inner planes.
 
 
-### 6) Connectors & peripherals
+###  7.4.3 Connectors & peripherals
 
 -   *Servo header:* Powered from the regulated 5 V rail; keep return path next to the 5 V trace.
 
@@ -453,20 +579,7 @@ Our PCB design is implemented across three specialized boards to maximize reliab
 -   *NeoPixel header (P1):* Decouple with *100 nF* at the connector and, if long strips are used, a *large electrolytic* (≥1000 µF) at the first LED.
 
 
-### 7) Layout guidance (applied)
-
--   *Stack‑up:* 6‑layer with *three GND planes* (L2/L5/L6) provides low impedance return and shields signals.
-
--   *Star power:* Route battery → switch → regulator → loads with *star‑like branching*; do not daisy‑chain sensitive logic behind motor currents.
-
--   *Keep loops tight:* Especially the driver’s *switching loop* and the regulator loop. Use wide pours for battery and motor paths.
-
--   *Segregate zones:* Physically separate *power* (battery, driver, regulator) from *logic* (Teensy, level‑signals). Cross at right angles if they must cross.
-
--   *Stitching vias:* Surround the driver and the high‑current paths with plenty of GND stitching vias to contain fields and lower EMI (already used here).
-
-
-### 8) Bring‑up & test checklist
+###  7.4.4 Bring‑up & test checklist
 
 1.  Power the board with a *current‑limited bench supply* (e.g., 0.5–1 A) and verify no abnormal draw.
 
