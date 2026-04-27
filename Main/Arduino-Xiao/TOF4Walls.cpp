@@ -9,7 +9,7 @@
 
 #include "TOF4Walls.h"
 #include <algorithm>
-const uint8_t TOF4Walls::CENTRAL_ZONES[2] = { 43, 44};
+const uint8_t TOF4Walls::CENTRAL_ZONES[2] = {43, 44};
 
 TOF4Walls::TOF4Walls(TwoWire& wire,
                      int lpnFront,
@@ -39,50 +39,36 @@ bool TOF4Walls::begin(uint8_t freqHz) {
         pinMode(_lpnPins[i], OUTPUT);
         digitalWrite(_lpnPins[i], LOW);
     }
-    Serial.println("Sensores apagados");
     delay(10);
     _wire->begin();
     delay(100);
-    Serial.println("I2C iniciado");
-    _wire->setClock(1000000); // cambiar si 1MHZ falla
+    _wire->setClock(I2C_SPEED); // migth fail at 1,000,000 
     delay(10);
     // placeholder directions, one of them migth by the deault direction of the sensors
     //and may cause an error 
     const uint8_t addrs[4] = {0x01, 0x05, 0x08, 0xA0};
     //init sensor one by one
-    Serial.println("Iniciando sensores");
     if (!initOne(_front, _lpnPins[0], addrs[0], freqHz)) return false;
-    Serial.println("Sensor frontal listo");
     if (!initOne(_back,  _lpnPins[3], addrs[1], freqHz)) return false;
-    Serial.println("Sensor derecho listo");
     if (!initOne(_left,  _lpnPins[2], addrs[2], freqHz)) return false;
-    Serial.println("Sensor izquierdo listo");
-
     return true;
 }
 
 bool TOF4Walls::initOne(VL53L8CX& sensor, int lpnPin, uint8_t newAddress, uint8_t freqHz) {
    //Turn of the sensor by its LPN
     digitalWrite(lpnPin, HIGH);
-    delay(1000);
-    Serial.print("Iniciando sensor en pin ");    Serial.println(lpnPin);
+    delay(10);
     if (sensor.begin() != 0) return false;
-    delay(1000);
-    Serial.print("Sensor en pin ");    Serial.print(lpnPin); Serial.println(" iniciado");
+    delay(100);
     if (sensor.init() != 0) return false;
-    delay(1000);
-    Serial.print("Sensor en pin ");    Serial.print(lpnPin); Serial.println(" inited");
     if (sensor.set_i2c_address(newAddress) != 0) return false;
-    Serial.print("Direccion I2C cambiada para sensor en pin ");    Serial.println(lpnPin);
     //16U is for 4x4 resolution, it can be used at 64U or 8x8, but its not necessary  
     if (sensor.set_resolution(64U) != 0) return false;
     //continuous mode is required for the sensor to update its measurements
     //without needing a trigger
     if (sensor.set_ranging_mode(VL53L8CX_RANGING_MODE_CONTINUOUS) != 0) return false;
     if (sensor.set_ranging_frequency_hz(freqHz) != 0) return false;
-
     if (sensor.start_ranging() != 0) return false;
-
     delay(2);
     return true;
 }
