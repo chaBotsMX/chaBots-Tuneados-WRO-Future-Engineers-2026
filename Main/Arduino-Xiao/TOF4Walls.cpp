@@ -77,7 +77,6 @@ void TOF4Walls::update() {
     updateOne(_front, FRONT);
     updateOne(_back,  BACK);
     updateOne(_left,  LEFT);
-    updateOne(_right, RIGHT);
 }
 
 void TOF4Walls::updateOne(VL53L8CX& sensor, uint8_t index) {

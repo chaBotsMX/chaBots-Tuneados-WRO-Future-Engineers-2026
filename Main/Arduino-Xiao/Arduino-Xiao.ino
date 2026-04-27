@@ -1,23 +1,16 @@
 #include "TOF4Walls.h"
 #include "Wire.h"
 #include "DebugLog.h"
+
 #define SERIAL_PC_SPEED 115200
 #define SERIAL_TEENSY_SPEED 2000000
+
 constexpr int LPN_FRONT = 2;
 constexpr int LPN_BACK  = 3;
 constexpr int LPN_LEFT  = 0;
 constexpr int LPN_RIGHT = 1;
 
 
-#define DEBUG_ENABLED
-
-
-#ifdef DEBUG_ENABLED
-#define DEBUG_LOG(x) Serial.print(x) 
-#define DEBUG_LOGL(x) Serial.println(x) 
-#else #define DEBUG_LOG(x) 
-#define DEBUG_LOGL(x) 
-#endif
 
 
 TOF4Walls tofs(Wire, LPN_FRONT, LPN_BACK, LPN_LEFT, LPN_RIGHT);
@@ -51,16 +44,27 @@ void loop() {
         DEBUG_LOG("  R: ");
         DEBUG_LOGL(right);
 
-        Serial1.write(0xAA);                  // start byte
+        uint8_t lowByteFront = lowByte(front);
+        uint8_t highByteFront = highByte(front);
 
-        Serial1.write(lowByte(front));
-        Serial1.write(highByte(front));
+        uint8_t lowByteLeft = lowByte(left);
+        uint8_t highByteLeft = highByte(left);
 
-        Serial1.write(lowByte(left));
-        Serial1.write(highByte(left));
+        uint8_t lowByteRight = lowByte(right);
+        uint8_t highByteRight = highByte(right);
 
-        Serial1.write(lowByte(right));
-        Serial1.write(highByte(right));
+        uint8_t checksum = lowByteFront + highByteFront + lowByteLeft + highByteLeft + lowByteRight + highByteRight;
+
+        Serial1.write(0xAA);// start byte
+
+        Serial1.write(lowByteFront);
+        Serial1.write(highByteFront);
+
+        Serial1.write(lowByteLeft);
+        Serial1.write(highByteLeft);
+
+        Serial1.write(lowByteRight);
+        Serial1.write(highByteRight);
+        Serial1.write(checksum);
     }
-    else {}
 }
