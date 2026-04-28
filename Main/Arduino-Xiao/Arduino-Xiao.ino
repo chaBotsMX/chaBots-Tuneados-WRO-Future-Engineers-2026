@@ -6,14 +6,14 @@
 #define SERIAL_TEENSY_SPEED 2000000
 
 constexpr int LPN_FRONT = 2;
-constexpr int LPN_BACK  = 3;
+constexpr int LPN_RIGHT  = 3;
 constexpr int LPN_LEFT  = 0;
-constexpr int LPN_RIGHT = 1;
+constexpr int LPN_BACK = 1;
 
 
 
 
-TOF4Walls tofs(Wire, LPN_FRONT, LPN_BACK, LPN_LEFT, LPN_RIGHT);
+TOF4Walls tofs(Wire, LPN_FRONT, LPN_RIGHT, LPN_LEFT, LPN_BACK);
 
 void setup() {
     pinMode(13,OUTPUT);
@@ -22,7 +22,7 @@ void setup() {
     Serial1.begin(SERIAL_TEENSY_SPEED, SERIAL_8N1, D7, D6);
     delay(1000);
     DEBUG_LOGL("Initing...");
-    if (!tofs.begin(30)) {
+    if (!tofs.begin(60)) {
         DEBUG_LOGL("Error, pls reboot");
         while (true) {  }
     }
@@ -32,10 +32,10 @@ void setup() {
 
 void loop() {
     tofs.update();
-    if (tofs.hasFreshData(TOF4Walls::FRONT)) {
+    if (tofs.hasFreshData(TOF4Walls::FRONT) || tofs.hasFreshData(TOF4Walls::LEFT) || tofs.hasFreshData(TOF4Walls::RIGHT) ) {
         uint16_t front = (uint16_t)tofs.getDistance(TOF4Walls::FRONT);
         uint16_t left  = (uint16_t)tofs.getDistance(TOF4Walls::LEFT);
-        uint16_t right = (uint16_t)tofs.getDistance(TOF4Walls::BACK);
+        uint16_t right = (uint16_t)tofs.getDistance(TOF4Walls::RIGHT);
 
         DEBUG_LOG("F: ");
         DEBUG_LOG(front);

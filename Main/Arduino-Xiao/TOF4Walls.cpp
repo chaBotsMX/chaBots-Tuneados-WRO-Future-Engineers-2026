@@ -13,18 +13,18 @@ const uint8_t TOF4Walls::CENTRAL_ZONES[2] = {43, 44};
 
 TOF4Walls::TOF4Walls(TwoWire& wire,
                      int lpnFront,
-                     int lpnBack,
+                     int lpnRight,
                      int lpnLeft,
-                     int lpnRight)
+                     int lpnBack)
     : _wire(&wire),
       _front(&wire, lpnFront),
       _back(&wire, lpnBack),
       _left(&wire, lpnLeft),
       _right(&wire, lpnRight) {
     _lpnPins[0] = lpnFront;
-    _lpnPins[1] = lpnBack;
+    _lpnPins[1] = lpnRight;
     _lpnPins[2] = lpnLeft;
-    _lpnPins[3] = lpnRight;
+    _lpnPins[3] = lpnBack;
 
     for (int i = 0; i < 4; i++) {
         _distances[i] = -1;
@@ -42,14 +42,13 @@ bool TOF4Walls::begin(uint8_t freqHz) {
     delay(10);
     _wire->begin();
     delay(100);
-    _wire->setClock(I2C_SPEED); // migth fail at 1,000,000 
+    _wire->setClock(I2C_SPEED);
     delay(10);
-    // placeholder directions, one of them migth by the deault direction of the sensors
-    //and may cause an error 
+    // Directions for the TOFs once fully inited.
     const uint8_t addrs[4] = {0x01, 0x05, 0x08, 0xA0};
     //init sensor one by one
     if (!initOne(_front, _lpnPins[0], addrs[0], freqHz)) return false;
-    if (!initOne(_back,  _lpnPins[3], addrs[1], freqHz)) return false;
+    if (!initOne(_right,  _lpnPins[1], addrs[1], freqHz)) return false;
     if (!initOne(_left,  _lpnPins[2], addrs[2], freqHz)) return false;
     return true;
 }
