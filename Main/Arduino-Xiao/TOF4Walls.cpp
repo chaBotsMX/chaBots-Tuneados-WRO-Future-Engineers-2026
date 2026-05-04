@@ -45,11 +45,15 @@ bool TOF4Walls::begin(uint8_t freqHz) {
     _wire->setClock(I2C_SPEED);
     delay(10);
     // Directions for the TOFs once fully inited.
-    const uint8_t addrs[4] = {0x01, 0x05, 0x08, 0xA0};
+    const uint8_t addrs[4] = {0x54, 0x56, 0x58, 0x5A};
     //init sensor one by one
+    DEBUG_LOGL("initing 3 sensors");
     if (!initOne(_front, _lpnPins[0], addrs[0], freqHz)) return false;
+    DEBUG_LOGL("initing sensor front");
     if (!initOne(_right,  _lpnPins[1], addrs[1], freqHz)) return false;
+    DEBUG_LOGL("initing sensor right");
     if (!initOne(_left,  _lpnPins[2], addrs[2], freqHz)) return false;
+    DEBUG_LOGL("initing sensor left");
     return true;
 }
 
@@ -74,7 +78,7 @@ bool TOF4Walls::initOne(VL53L8CX& sensor, int lpnPin, uint8_t newAddress, uint8_
 
 void TOF4Walls::update() {
     updateOne(_front, FRONT);
-    updateOne(_back,  BACK);
+    updateOne(_right,  RIGHT);
     updateOne(_left,  LEFT);
 }
 

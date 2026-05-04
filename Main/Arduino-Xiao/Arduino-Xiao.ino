@@ -6,12 +6,9 @@
 #define SERIAL_TEENSY_SPEED 2000000
 
 constexpr int LPN_FRONT = 2;
-constexpr int LPN_RIGHT  = 3;
+constexpr int LPN_RIGHT  = 1;
 constexpr int LPN_LEFT  = 0;
-constexpr int LPN_BACK = 1;
-
-
-
+constexpr int LPN_BACK = 3;
 
 TOF4Walls tofs(Wire, LPN_FRONT, LPN_RIGHT, LPN_LEFT, LPN_BACK);
 
@@ -21,6 +18,7 @@ void setup() {
     Serial.begin(SERIAL_PC_SPEED);
     Serial1.begin(SERIAL_TEENSY_SPEED, SERIAL_8N1, D7, D6);
     delay(1000);
+
     DEBUG_LOGL("Initing...");
     if (!tofs.begin(60)) {
         DEBUG_LOGL("Error, pls reboot");
@@ -67,4 +65,5 @@ void loop() {
         Serial1.write(highByteRight);
         Serial1.write(checksum);
     }
+
 }
