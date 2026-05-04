@@ -2,25 +2,15 @@
 #include "Wire.h"
 #include "DebugLog.h"
 
-#include <elapsedMillis.h>
-
 #define SERIAL_PC_SPEED 115200
 #define SERIAL_TEENSY_SPEED 2000000
-
-
 
 constexpr int LPN_FRONT = 2;
 constexpr int LPN_RIGHT  = 1;
 constexpr int LPN_LEFT  = 0;
 constexpr int LPN_BACK = 3;
 
-
-
 TOF4Walls tofs(Wire, LPN_FRONT, LPN_RIGHT, LPN_LEFT, LPN_BACK);
-
-
-
-
 
 void setup() {
     pinMode(13,OUTPUT);
