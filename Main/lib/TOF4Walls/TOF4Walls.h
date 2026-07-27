@@ -14,7 +14,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <vl53l8cx.h>
-
+//Define i2c clock speed
+#define I2C_SPEED 1000000
 class TOF4Walls {
 public:
     enum Side : uint8_t {
@@ -38,7 +39,7 @@ public:
     uint8_t getLastStatus(Side side) const;
 
 private:
-    static const uint8_t CENTRAL_ZONES[4];
+    static const uint8_t CENTRAL_ZONES[2];
 
     TwoWire* _wire;
     int _lpnPins[4];
