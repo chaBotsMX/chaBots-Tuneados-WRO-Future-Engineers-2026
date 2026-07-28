@@ -9,7 +9,7 @@
 
 #include "TOF4Walls.h"
 #include <algorithm>
-const uint8_t TOF4Walls::CENTRAL_ZONES[2] = {43, 44};
+const uint8_t TOF4Walls::CENTRAL_ZONES[NUM_LOOKUP_ZONES] = {_centralZones[0], _centralZones[1]};
 
 TOF4Walls::TOF4Walls(TwoWire& wire,
                      int lpnFront,
@@ -110,7 +110,7 @@ int16_t TOF4Walls::computeWallDistance(const VL53L8CX_ResultsData& results, uint
     //status 255 means no valid measurement, 5 is the best, then 6 and 9 are acceptable, the rest are discarded
     chosenStatus = 255;
 
-    for (uint8_t i = 0; i < 2; i++) {
+    for (uint8_t i = 0; i < NUM_LOOKUP_ZONES; i++) {
         uint8_t z = CENTRAL_ZONES[i];
 
       //check if the ligth reflected in that zone, target_detected 0 means no reflection or the same as no reading
