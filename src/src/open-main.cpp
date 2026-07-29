@@ -1,18 +1,16 @@
 #include <Arduino.h>
+#include <Move.h>
 
-// put function declarations here:
-int myFunction(int, int);
+Move motor;
 
 void setup() {
   // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);
+  motor.setTask(200,100,30,20,0,0); 
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  motor.updateCM();
+
 }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
-}

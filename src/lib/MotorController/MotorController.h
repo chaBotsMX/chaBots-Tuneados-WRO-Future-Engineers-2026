@@ -11,6 +11,9 @@
 #include <Arduino.h>
 #include <Encoder.h>
 
+//this option optimize the use of interrupts in teensy and improve performance not using attachinterrupt
+#define ENCODER_OPTIMIZE_INTERRUPTS
+
 #define INA         3
 #define INB         1
 #define PWM         2
