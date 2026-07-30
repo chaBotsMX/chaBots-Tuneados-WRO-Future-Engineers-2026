@@ -16,6 +16,11 @@
 #include <vl53l8cx.h>
 //Define i2c clock speed
 #define I2C_SPEED 1000000
+#define NUM_LOOKUP_ZONES 2
+
+//Selected zonea for detecntion of walls, 43 and 44 are the central zones for 8x8 resolution
+uint8_t _centralZones[NUM_LOOKUP_ZONES] = {43, 44};
+
 class TOF4Walls {
 public:
     enum Side : uint8_t {
@@ -39,7 +44,9 @@ public:
     uint8_t getLastStatus(Side side) const;
 
 private:
-    static const uint8_t CENTRAL_ZONES[2];
+    static const uint8_t CENTRAL_ZONES[NUM_LOOKUP_ZONES];
+
+
 
     TwoWire* _wire;
     int _lpnPins[4];
