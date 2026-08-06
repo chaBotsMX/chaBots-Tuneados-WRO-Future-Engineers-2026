@@ -9,7 +9,8 @@
 
 #include "TOF4Walls.h"
 #include <algorithm>
-const uint8_t TOF4Walls::CENTRAL_ZONES[NUM_LOOKUP_ZONES] = {_centralZones[0], _centralZones[1]};
+//Selected zonea for detecntion of walls, 43 and 44 are the central zones for 8x8 resolution
+const uint8_t TOF4Walls::CENTRAL_ZONES[NUM_LOOKUP_ZONES] = {43, 44};
 
 TOF4Walls::TOF4Walls(TwoWire& wire,
                      int lpnFront,

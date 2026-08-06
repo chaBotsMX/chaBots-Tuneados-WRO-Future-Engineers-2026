@@ -50,7 +50,7 @@ void Move::updateCM(){
     if (CMcurrent < CMtarget) {
         float targetDistanceTraveledPercentage = (CMcurrent / CMtarget) * 100.0f;
         int profileSpeed = this->calculateProfileSpeed();
-        profileSpeed = constrain(profileSpeed, 10, CMSpeedTarget);
+        profileSpeed = constrain(profileSpeed, MIN_SPEED, CMSpeedTarget); //minimum positive output to avoid motor stuck in 0 at init of the task.
         this->driveAtSpeed(profileSpeed, 5, 0, CMcurrent);
     } else {
         // Stop the motor
@@ -63,6 +63,7 @@ void Move::driveAtPWM(int pwm){
     controller.motorDrivebyPWM(pwm);
 }
 // vobjetivo ​= min(vmax​,v02​+2adrecorrida​​,vf2​+2ddrestante​​)
+
 int Move::calculateProfileSpeed(){
     float VoptimalActual = sqrt(pow(profile.VInitial, 2) + 2 * profile.A * CMcurrent);
     float VoptimalFinal = sqrt(pow(profile.VFinal, 2) + 2 * profile.D * (CMtarget - CMcurrent));
