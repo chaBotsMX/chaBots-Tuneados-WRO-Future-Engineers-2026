@@ -2,9 +2,15 @@
 #include "Wire.h"
 #include "DebugLog.h"
 
+#define LED_PIN 13
+
 #define SERIAL_PC_SPEED 115200
 #define SERIAL_TEENSY_SPEED 2000000
 
+#define RX_PIN D7
+#define TX_PIN D6
+
+#define INITIALIZE_DELAY 1000
 constexpr int LPN_FRONT = 2;
 constexpr int LPN_RIGHT  = 3;
 constexpr int LPN_LEFT  = 0;
@@ -16,12 +22,16 @@ constexpr int LPN_BACK = 1;
 TOF4Walls tofs(Wire, LPN_FRONT, LPN_RIGHT, LPN_LEFT, LPN_BACK);
 
 void setup() {
-    pinMode(13,OUTPUT);
-    digitalWrite(13, LOW);
+    pinMode(LED_PIN,OUTPUT);
+    digitalWrite(LED_PIN, LOW);
+    //initialize serial ports for communication with PC and Teensy
     Serial.begin(SERIAL_PC_SPEED);
-    Serial1.begin(SERIAL_TEENSY_SPEED, SERIAL_8N1, D7, D6);
-    delay(1000);
+    Serial1.begin(SERIAL_TEENSY_SPEED, SERIAL_8N1, RX_PIN, TX_PIN);
+    //initial delay to allow the xiao to boot up and be ready for communication
+    delay(INITIALIZE_DELAY);
     DEBUG_LOGL("Initing...");
+
+    //initialize the TOF sensors, if any of them fails to initialize, the program will halt and print an error message.
     if (!tofs.begin(60)) {
         DEBUG_LOGL("Error, pls reboot");
         while (true) {  }
@@ -53,9 +63,14 @@ void loop() {
         uint8_t lowByteRight = lowByte(right);
         uint8_t highByteRight = highByte(right);
 
-        uint8_t checksum = lowByteFront + highByteFront + lowByteLeft + highByteLeft + lowByteRight + highByteRight;
+        //placeholder until back sensor is implemented
+        uint8_t lowByteBack = 0; 
+        uint8_t highByteBack = 0;
 
-        Serial1.write(0xAA);// start byte
+        uint8_t checksum = lowByteFront + highByteFront + lowByteLeft + highByteLeft + lowByteRight + highByteRight + lowByteBack + highByteBack;
+
+        Serial1.write(0xAA);// double start byte
+        Serial1.write(0x55);
 
         Serial1.write(lowByteFront);
         Serial1.write(highByteFront);
@@ -65,6 +80,11 @@ void loop() {
 
         Serial1.write(lowByteRight);
         Serial1.write(highByteRight);
+
+        Serial1.write(lowByteBack);
+        Serial1.write(highByteBack);
+
         Serial1.write(checksum);
+        Serial1.write(0xBB);// End byte
     }
 }
