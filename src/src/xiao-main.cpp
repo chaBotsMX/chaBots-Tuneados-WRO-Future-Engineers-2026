@@ -54,6 +54,7 @@ void loop() {
         DEBUG_LOG("  R: ");
         DEBUG_LOGL(right);
 
+        digitalWrite(LED_PIN, HIGH);
         uint8_t lowByteFront = lowByte(front);
         uint8_t highByteFront = highByte(front);
 
