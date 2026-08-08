@@ -34,7 +34,7 @@ private:
     MotorController controller;
     elapsedMillis speedTimer;
     MoveProfile profile;
-
+    const int MIN_SPEED = 10; // Minimum speed in cm/s
     float CMProfileSpeed = 0.0f;
     uint32_t lastProfileUpdateUs = 0;
     long int encoderCounter = 0;
