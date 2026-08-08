@@ -10,4 +10,9 @@ struct SensorData {
     uint16_t back;
 };
 
+struct SteeringCalibration {
+    float ackermannAngle;
+    float servoOffset;
+};
+
 #endif
