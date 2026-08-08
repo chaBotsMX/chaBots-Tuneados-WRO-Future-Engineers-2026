@@ -46,11 +46,11 @@ bool TOF4Walls::begin(uint8_t freqHz) {
     _wire->setClock(I2C_SPEED);
     delay(10);
     // Directions for the TOFs once fully inited.
-    const uint8_t addrs[4] = {0x01, 0x05, 0x08, 0xA0};
+    const uint8_t addrs[4] = {0x54, 0x56, 0x58, 0x5A}; // New I2C addresses for the sensors
     //init sensor one by one
-    if (!initOne(_front, _lpnPins[0], addrs[0], freqHz)) return false;
-    if (!initOne(_right,  _lpnPins[1], addrs[1], freqHz)) return false;
-    if (!initOne(_left,  _lpnPins[2], addrs[2], freqHz)) return false;
+    if (!initOne(_front, _lpnPins[0], addrs[0], freqHz));
+    if (!initOne(_right,  _lpnPins[1], addrs[1], freqHz));
+    if (!initOne(_left,  _lpnPins[2], addrs[2], freqHz));
     return true;
 }
 
