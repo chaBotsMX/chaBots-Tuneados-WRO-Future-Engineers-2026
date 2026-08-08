@@ -11,10 +11,10 @@
 #define TX_PIN D6
 
 #define INITIALIZE_DELAY 1000
-constexpr int LPN_FRONT = 2;
-constexpr int LPN_RIGHT  = 3;
-constexpr int LPN_LEFT  = 0;
-constexpr int LPN_BACK = 1;
+constexpr int LPN_FRONT = D2;
+constexpr int LPN_RIGHT  = D3;
+constexpr int LPN_LEFT  = D0;
+constexpr int LPN_BACK = D1;
 
 
 
@@ -22,11 +22,12 @@ constexpr int LPN_BACK = 1;
 TOF4Walls tofs(Wire, LPN_FRONT, LPN_RIGHT, LPN_LEFT, LPN_BACK);
 
 void setup() {
-    pinMode(LED_PIN,OUTPUT);
+    //pinMode(LED_PIN,OUTPUT);
     digitalWrite(LED_PIN, LOW);
     //initialize serial ports for communication with PC and Teensy
     Serial.begin(SERIAL_PC_SPEED);
     Serial1.begin(SERIAL_TEENSY_SPEED, SERIAL_8N1, RX_PIN, TX_PIN);
+
     //initial delay to allow the xiao to boot up and be ready for communication
     delay(INITIALIZE_DELAY);
     DEBUG_LOGL("Initing...");
@@ -54,7 +55,7 @@ void loop() {
         DEBUG_LOG("  R: ");
         DEBUG_LOGL(right);
 
-        digitalWrite(LED_PIN, HIGH);
+        //digitalWrite(LED_PIN, HIGH);
         uint8_t lowByteFront = lowByte(front);
         uint8_t highByteFront = highByte(front);
 
