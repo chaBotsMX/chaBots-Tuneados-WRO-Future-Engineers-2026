@@ -36,6 +36,7 @@ void Move::setTask(float distanceCM, float speedCMperS, float accelerationCMperS
 
 void Move::driveAtSpeed(float speedCMperS, float kp, float ki, float actualCM){
     int actualSpeedPWM = (actualCM - lastCMcurrent) / (speedTimer / 1000.0f); // Calculate actual speed in cm/s
+    robotSpeed = actualSpeedPWM;
     int speedError = actualSpeedPWM - speedCMperS; // Calculate speed error
     int pwmOutput = kp * speedError; // Proportional control
     pwmOutput = constrain(pwmOutput, -MAX_PWM, MAX_PWM); // Constrain the PWM output to prevent overheating

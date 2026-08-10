@@ -30,6 +30,9 @@ public:
     void driveAtPWM(int pwm);
     void driveAtSpeed(float speedCMperS, float kp, float ki, float actualCM);
     int calculateProfileSpeed();
+    int getCurrentSpeed() const {
+        return robotSpeed;
+    }
 private:
     MotorController controller;
     elapsedMillis speedTimer;
@@ -43,6 +46,7 @@ private:
     int CMSpeedTarget = 0;
     int CMcurrent = 0;
     int lastCMcurrent = 0;
+    int robotSpeed = 0;
 };
 
 #endif

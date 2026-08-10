@@ -72,3 +72,4 @@ void MotorController::brake(){
 void MotorController::resetTicks(){
   counterTicks = motor.read();
 }
+

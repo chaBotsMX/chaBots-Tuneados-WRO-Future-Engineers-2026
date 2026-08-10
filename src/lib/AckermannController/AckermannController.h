@@ -14,14 +14,14 @@
 
 #define MAX_ACKERMANN_ANGLE 25.94f
 #define MAX_SERVO_OFFSET    20.0f
-#define IDLE_STEERING_ANGLE 90.0f
+#define IDLE_STEERING_ANGLE 80.0f
 
 
 
 class AckermannController {
 public:
-    AckermannController(uint8_t servoPin);
-
+    AckermannController();
+    void begin();
     void setSteeringAngle(float angle);
     void steerByRawAngle(float rawAngle);
 

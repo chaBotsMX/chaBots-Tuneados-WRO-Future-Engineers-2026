@@ -7,9 +7,13 @@
 
 #include "AckermannController.h"
 
-AckermannController::AckermannController(uint8_t servoPin)
+AckermannController::AckermannController()
 {
-    steeringServo.attach(servoPin);
+}
+
+void AckermannController::begin()
+{
+    steeringServo.attach(12);
     steeringServo.write(IDLE_STEERING_ANGLE);
 }
 
