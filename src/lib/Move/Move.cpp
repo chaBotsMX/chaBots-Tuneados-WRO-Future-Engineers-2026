@@ -44,7 +44,7 @@ void Move::driveAtSpeed(float speedCMperS, float kp, float ki, float actualCM){
     lastCMcurrent = actualCM;
 }
 
-void Move::updateCM(){
+bool Move::updateCM(){
     CMcurrent = abs(controller.getDistanceMM()) / 10.0f; // Convert mm to cm
     Serial.print("Current CM: ");
     Serial.println(CMcurrent);
@@ -53,9 +53,11 @@ void Move::updateCM(){
         int profileSpeed = this->calculateProfileSpeed();
         profileSpeed = constrain(profileSpeed, MIN_SPEED, CMSpeedTarget); //minimum positive output to avoid motor stuck in 0 at init of the task.
         this->driveAtSpeed(profileSpeed, 5, 0, CMcurrent);
+        return false;
     } else {
         // Stop the motor
         controller.brake();
+        return true;
     }
 }
 

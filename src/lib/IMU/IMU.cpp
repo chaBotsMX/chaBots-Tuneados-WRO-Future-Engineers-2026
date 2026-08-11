@@ -30,11 +30,19 @@ bool IMU::update(){
     float qk = sensorValue.un.gameRotationVector.k;
     
     yaw = atan2(2.0 * (qi * qj + qk * qr), (sq(qr) + sq(qi) - sq(qj) - sq(qk))) * RAD_TO_DEG;
-    
+    error = wrap180(setPoint - yaw);
   }
   return true;
 }
 
 float IMU::getYaw(){
   return yaw;
+}
+
+void IMU::setSetPoint(int newPoint){
+  this->error = newPoint;
+}
+
+float IMU::getError(){
+  return error;
 }

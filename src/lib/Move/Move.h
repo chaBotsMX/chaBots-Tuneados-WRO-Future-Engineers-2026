@@ -25,7 +25,7 @@ class Move {
 public:
     Move();
   
-    void updateCM();
+    bool updateCM();
     void setTask(float distanceCM, float speedCMperS, float accelerationCMperS2, float decelerationCMperS2, float initialSpeedCMperS, float finalSpeedCMperS);
     void driveAtPWM(int pwm);
     void driveAtSpeed(float speedCMperS, float kp, float ki, float actualCM);
