@@ -1,3 +1,4 @@
+
 # ChaBots - WRO Future Engineers 2026
 
   
@@ -743,7 +744,7 @@ The drive axle consists of 4 mm steel shafts, which were custom-cut from rod sto
 | 8.1.1 Pololu 25D Encoder | The 25D Metal Gearmotor serves as the robust mechanical core of the propulsion system, featuring a high-performance 12V brushed DC motor paired with a 9.7:1 metal spur gearbox. This unit was selected for its exceptional balance of compact form factor and dynamic response. The precision-cut metal gears act as the primary mechanism for torque amplification, achieving a versatile output speed of approximately 600 RPM. Furthermore, the integrated quadrature encoder provides real-time feedback for closed-loop control, ensuring the precise velocity and positional accuracy required for the robot’s agile maneuvering and synchronized movement. | <picture style="display: block; margin: 0 auto;"><img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/gearbox/gearbox-25d-metal-gearmotor-4.4-9.7-encoder.png?raw=true" style="width: 100%;"></picture> |
 | 8.1.2 Base | We designed the base of the gearbox so that the wheel axle is as close as possible to the steering axis in order to make tighter turns. | <picture style="display: block; margin: 0 auto;"><img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/gearbox/gearbox-base.png?raw=true" style="width: 100%;"></picture> |
 | 8.1.3 Gears | The custom-printed double helical gears transfer power from the motor's gearhead output to the wheel axle. This external gear stage was designed with a 1:1 gear ratio. This configuration was chosen because the Maxon motor's integrated gearhead already provided the ideal speed reduction (down to 600 RPM) and torque multiplication. The 1:1 external gears, therefore, act as a direct power transmission, simplifying the design while perfectly matching the motor's output speed to the drive wheels. | <picture style="display: block; margin: 0 auto;"><img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/gearbox/gearbox-gear.png?raw=true" style="width: 100%;"></picture> |
-| 8.1.4 Rhine G | The rear traction system features a custom-engineered oversized rhine, specifically designed to compensate for the robot’s geometry and maintain a consistent ground clearance across the chassis. Precision-machined with a dedicated D-shaft coupler, the rim ensures a high-tolerance press-fit onto the motor’s output shaft, eliminating backlash during high-torque maneuvers. Beyond its functional role in leveling the platform, the wheel incorporates an aggressive, aesthetic-driven spoke pattern that aligns with the "tuned" visual identity of the team. This design prioritizes both structural integrity for payload distribution and a high-profile aesthetic that distinguishes the robot’s stance on the field. | <picture style="display: block; margin: 0 auto;"><img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/gearbox/gearbox-rhim-g.png?raw=true" style="width: 100%;"></picture> |
+| 8.1.4 Rim G | The rear traction system features a custom-engineered oversized rhine, specifically designed to compensate for the robot’s geometry and maintain a consistent ground clearance across the chassis. Precision-machined with a dedicated D-shaft coupler, the rim ensures a high-tolerance press-fit onto the motor’s output shaft, eliminating backlash during high-torque maneuvers. Beyond its functional role in leveling the platform, the wheel incorporates an aggressive, aesthetic-driven spoke pattern that aligns with the "tuned" visual identity of the team. This design prioritizes both structural integrity for payload distribution and a high-profile aesthetic that distinguishes the robot’s stance on the field. | <picture style="display: block; margin: 0 auto;"><img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/gearbox/gearbox-rhim-g.png?raw=true" style="width: 100%;"></picture> |
 
   
 
@@ -763,7 +764,7 @@ For the steering system, the goal was to simplify the mechanism as much as possi
 | 8.2.4 Bracket Connectors | As mentioned above, we used two connectors, one per wheel, so they rotated independently.| <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-bracketconnector.png?raw=true" style="width: 100%;"> </picture> |
 | 8.2.5 Stabilizer | This stabilizer bar is to prevent the wheel brackets from having play and to make them more stable. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-stabilizer.png?raw=true" style="width: 100%;"> </picture> |
 | 8.2.6 Wheel Bracket | We designed the L-shaped wheel mount so that the wheels could rotate more easily and not collide with the robot's chassis. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-wheelbracket.png?raw=true" style="width: 100%;"> </picture> |
-| 8.2.7 Rhine S | This rhine represents the compact iteration of our wheel assembly, specifically engineered to interface with the front wheel brackets. This downsized variant is critical for maintaining the robot’s horizontal alignment, counterbalancing the larger rear drive wheels to achieve a perfectly leveled center of gravity. Designed for low-friction rotation and high maneuverability, the Rhine S utilizes a streamlined profile that reduces rotational inertia. We then used a mold and polyurethane resin a40 to make the rubber. This process is shown in the following video: [WRO FutureEngineers Custom Wheels - chaBots NERV](https://youtu.be/8JH6QCOU_B0) | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-rhine-s.png?raw=true" style="width: 100%;"> </picture>|
+| 8.2.7 Rim S | The rim s represents the compact version of our wheel assembly, designed specifically to attach to the front wheel mounts via a bearing. This smaller variant is crucial for maintaining the robot's horizontal alignment, counterbalancing the weight of the larger rear drive wheels to achieve a perfectly level center of gravity. Engineered for low-friction rotation and high maneuverability, the rim features an optimized profile that reduces rotational inertia. Subsequently, we use a mold and A40 polyurethane resin to manufacture the rubber component. This process is shown in the following video: [WRO FutureEngineers Custom Wheels - chaBots NERV](https://youtu.be/8JH6QCOU_B0) | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-rhine-s.png?raw=true" style="width: 100%;"> </picture>|
 
   
   
@@ -771,17 +772,9 @@ For the steering system, the goal was to simplify the mechanism as much as possi
 
   
 
-<img  src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/cam-mount/cam-mount.png?raw=true">
+<img  src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/cam-mount/cam-support.png?raw=true">
 
-The camera mounting system features a modular design engineered for precise tilt-axis orientation. This adjustable bracket allows for granular control over the vertical field of view, enabling the sensor to be locked at the optimal angle for task-specific vision processing. The assembly utilizes a friction-fit pivot mechanism combined with secure fastening points to ensure the camera maintains its orientation despite high-vibration environments or rapid chassis acceleration. By providing a customizable pitch range, the mount ensures the optical center can be calibrated to detect floor-level markers or distant environmental cues with consistent reliability.
-
-  
-
-| Part | Description | Image |
-| --- | --- | :---: |
-| 8.3.1 Camera Base | This part is mounted on the chassis with the help of some posts. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/cam-mount/cam-base.png?raw=true" style="width: 100%;"> </picture> |
-| 8.3.2 Camera Support | This part holds the camera and is attached to the base with screws to allow manipulation of the clamping angle. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/cam-mount/cam-support.png?raw=true" style="width: 100%;"> </picture> |
-
+A simple fixed-angle bracket designed to mount the camera onto the robot chassis.
   
 
 ### 8.4 Chassis
@@ -791,6 +784,8 @@ The camera mounting system features a modular design engineered for precise tilt
 | Part | Description | Image |
 | --- | --- | :---: |
 | 8.4.1 Chassis Base | The chassis is the robot's main structure, as all other systems are mounted on it. A modular design was chosen to facilitate assembly and maintenance. The chassis is made of carbon fiber filament. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/chassis/chassis-base.png?raw=true" style="width: 100%;"> </picture> |
+| 8.4.2 Front Bumper | Designed for front-end integration, this custom bumper acts as a protective shield for the robot's chassis by absorbing direct frontal impacts and preventing damage to internal electronics or sensors during navigation. | <picture style="display: block; margin: 0 auto;"> <img src="" style="width: 100%;"> </picture> |
+| 8.4.3 Rear Bumper | Designed for rear-end protection, this custom bumper shields the back of the chassis and internal components from impacts during reversing maneuvers or wall contact. | <picture style="display: block; margin: 0 auto;"> <img src="" style="width: 100%;"> </picture> |
 
 
 
