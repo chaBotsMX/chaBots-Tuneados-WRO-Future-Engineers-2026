@@ -8,9 +8,10 @@
 
  #include "HCI.h"
 
- Adafruit_NeoPixel pixels(NUM_NEOPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
- 
- HCI::HCI(){}
+
+ HCI::HCI():
+        pixels(NUM_NEOPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800)
+ {}
 
 void HCI::begin(){
     pinMode(BUTTON,INPUT);

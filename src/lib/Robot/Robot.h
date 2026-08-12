@@ -50,9 +50,20 @@ public:
 
     void executeTask();
 
+    void printData();
+
+    void turn();
+
+    void taskTurn();
+
+    void taskGoStraighUntilEdge();
+
+    void goStraighUntilEdge();
+
     int taskStatus = 0;
     int frontDistance = 0;
 
+    int initialSetPoint = 0;
 private:
 
 

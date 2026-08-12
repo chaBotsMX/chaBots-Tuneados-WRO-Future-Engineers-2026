@@ -18,6 +18,7 @@
 
     imu.begin(IMU_SERIAL);
 
+    
  }
 
 
@@ -43,23 +44,38 @@ bool Robot::updateSensors(){
 }
 
 bool Robot::followWallByCM(){
-    float stanleyTheta = tc.stanley(wallDistance - validData.left,imu.getError(),float(move.getCurrentSpeed()), 0.002f, 0.5f);
-    ackermann.setSteeringAngle(stanleyTheta);
+    float stanleyTheta = tc.stanley(wallDistance - validData.left,-imu.getError(),float(move.getCurrentSpeed()), 0.002f, 1.0f);
+    ackermann.setSteeringAngle(-stanleyTheta);
+    Serial.print("stanleyTheta: ");
+    Serial.println(stanleyTheta);
     if(move.updateCM()){
         taskStatus = 0;
+        return true;
     }
+    return false;
 }
 
 bool Robot::followWallUntilWall(){
-    float stanleyTheta = tc.stanley(wallDistance - validData.left,imu.getError(),float(move.getCurrentSpeed()), 0.002f, 0.5f);
-    ackermann.setSteeringAngle(stanleyTheta);
-    move.driveAtSpeed(30,1,0.1,move.getCurrentSpeed());
+    float stanleyTheta = tc.stanley(wallDistance - validData.left,-imu.getError(),float(move.getCurrentSpeed()), 0.002f, 1.0f);
+    ackermann.setSteeringAngle(-stanleyTheta);
+   
 
     frontDistance = validData.front;
 
-    if(frontDistance < 1000){
+    if(frontDistance < 1000 && frontDistance > 500){
         taskStatus = 0;
+        ui.buzzSound(1);
+        return true;
     }
+    else if( frontDistance > 1000){
+        move.driveAtSpeed(50,1,0.1,move.getCurrentSpeed());
+
+        return false;
+    }
+    move.driveAtPWM(100);
+    delay(500);
+    validData.front = 3000;
+    return false;
 }
 
 void Robot::taskFollowWallByCm(float travelCM,float speed,float acceleration,float deacceleration, float initSpeed, float finalSpeed){
@@ -68,7 +84,14 @@ void Robot::taskFollowWallByCm(float travelCM,float speed,float acceleration,flo
 }
 
 void Robot::taskFollowWallUntilWall(){
-    taskStatus = 0;
+    taskStatus = 2;
+}
+
+void Robot::taskTurn(){
+    taskStatus = 3;
+    initialSetPoint = wrap180(initialSetPoint - 90);
+    imu.setSetPoint(initialSetPoint);
+
 }
 
 void Robot::executeTask(){
@@ -78,4 +101,48 @@ void Robot::executeTask(){
     else if(taskStatus == 2){
         followWallUntilWall();
     }
+    else if(taskStatus == 3){
+        turn();
+    }
+    else if(taskStatus == 4){
+        goStraighUntilEdge();
+    }
+}
+
+void Robot::printData(){
+    Serial.print("validData { front: ");
+    Serial.print(validData.front);
+    Serial.print(", left: ");
+    Serial.print(validData.left);
+    Serial.print(", right: ");
+    Serial.print(validData.right);
+    Serial.print(", back: ");
+    Serial.print(validData.back);
+    Serial.println(" }");
+}
+
+void Robot::turn(){
+    float error = imu.getError();
+    if(abs(error) < 5){
+        taskStatus = 0;
+        ui.buzzSound(1);
+    }
+    float theta = imu.getError() * 0.3;
+    ackermann.setSteeringAngle(theta);
+    move.driveAtPWM(-100);
+
+}
+
+void Robot::goStraighUntilEdge(){
+    move.driveAtPWM(-50);
+    float error = imu.getError();
+    float theta = error * 1.0f;
+    ackermann.setSteeringAngle(theta);
+    if(validData.front < 1000){
+        taskStatus = 0;
+    }
+}
+
+void Robot::taskGoStraighUntilEdge(){
+    taskStatus = 4;
 }

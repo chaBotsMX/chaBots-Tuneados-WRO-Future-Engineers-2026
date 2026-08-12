@@ -20,12 +20,13 @@ class IMU {
     float getError();
     void setSetPoint(int newError);
     float getYaw();
+    float setPoint;
   private:
     Adafruit_BNO08x bno08x;
     sh2_SensorValue_t sensorValue;
     float yaw;
     float error;
-    float setPoint;
+
 };
 
 #endif

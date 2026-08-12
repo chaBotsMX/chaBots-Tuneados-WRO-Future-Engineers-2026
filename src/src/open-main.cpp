@@ -2,12 +2,15 @@
 
 Robot robot;
 
+int taskNumber = 0;
+int lap = 0;
+int finish = 0;
 void setup() {
   // put your setup code here, to run once:
   robot.beginComms();
+  delay(1000);
   robot.ui.begin();
   robot.ackermann.begin();
-  robot.move.setTask(200, 50,10,10,0,0); // Example: Move 100 cm at 50 cm/s with acceleration and deceleration of 100 cm/s^2
   robot.validData.front = 3000;
   robot.validData.left = 3000;
   robot.validData.right = 3000;
@@ -19,28 +22,44 @@ void setup() {
     if (robot.ui.buttonRead() == true) {
   
       robot.ui.neoColor(0,0,255);
-      robot.ui.buzzSound();
+      robot.ui.buzzSound(1);
     }
   }
+  robot.imu.setSetPoint(0);
 }
 
 void loop() {
-  int taskNumber = 0;
+  robot.printData();
   robot.imu.update();
-  robot.xiao.readData();
   robot.updateSensors();
-
+ if(finish == 1){
+  return;
+ }
   if(robot.taskStatus == 0){
     taskNumber++;
 
-    if(taskNumber == 1){
-      robot.taskFollowWallByCm(100,50,30,30,0,0);
+    if (taskNumber == 1 && lap == 0){
+      robot.taskGoStraighUntilEdge();
+    }
+    else if(taskNumber == 1){
+      robot.taskFollowWallByCm(130,80,30,30,0,0);
     }
     else if (taskNumber == 2){
       robot.taskFollowWallUntilWall();
     }
-    else{
+    else if (taskNumber == 3){
+      robot.validData.front = 3000;
+      robot.taskTurn();
+    }
+    else if(lap == 11){
+      robot.move.driveAtPWM(-100);
+      delay(1000);
       robot.move.driveAtPWM(0);
+      finish = 1;
+    }
+    else{
+      lap++;
+      taskNumber = 0;
     }
   }
   else{

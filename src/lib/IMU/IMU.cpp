@@ -39,8 +39,11 @@ float IMU::getYaw(){
   return yaw;
 }
 
-void IMU::setSetPoint(int newPoint){
-  this->error = newPoint;
+void IMU::setSetPoint(int newPoint)
+{
+  
+    setPoint = wrap180(newPoint);
+    error = wrap180(setPoint - yaw);
 }
 
 float IMU::getError(){
