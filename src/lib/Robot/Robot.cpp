@@ -56,15 +56,12 @@ bool Robot::followWallByCM(){
 }
 
 bool Robot::followWallUntilWall(){
-    float stanleyTheta = tc.stanley(wallDistance - validData.left,-imu.getError(),float(move.getCurrentSpeed()), 0.002f, 1.0f);
-    ackermann.setSteeringAngle(-stanleyTheta);
-   
+    steerByStanley(0.002f, 1.0f);
 
     frontDistance = validData.front;
 
     if(frontDistance < 1000 && frontDistance > 500){
         taskStatus = 0;
-        ui.buzzSound(1);
         return true;
     }
     else if( frontDistance > 1000){
@@ -107,6 +104,9 @@ void Robot::executeTask(){
     else if(taskStatus == 4){
         goStraighUntilEdge();
     }
+    else if(taskStatus == 5){
+        goStraightByIMUCM();
+    }
 }
 
 void Robot::printData(){
@@ -125,7 +125,6 @@ void Robot::turn(){
     float error = imu.getError();
     if(abs(error) < 5){
         taskStatus = 0;
-        ui.buzzSound(1);
     }
     float theta = imu.getError() * 0.3;
     ackermann.setSteeringAngle(theta);
@@ -138,11 +137,81 @@ void Robot::goStraighUntilEdge(){
     float error = imu.getError();
     float theta = error * 1.0f;
     ackermann.setSteeringAngle(theta);
-    if(validData.front < 1000){
+    if(validData.front < 300){
         taskStatus = 0;
+        move.driveAtPWM(100);
+        delay(1000);
     }
 }
 
 void Robot::taskGoStraighUntilEdge(){
     taskStatus = 4;
+}
+
+void Robot::steerByStanley(float stanleyWallGain,float stanleyHeadingGain){
+    float stanleyTheta = tc.stanley(wallDistance - validData.left,-imu.getError(),float(move.getCurrentSpeed()), stanleyWallGain, stanleyHeadingGain);
+    ackermann.setSteeringAngle(-stanleyTheta);
+   
+
+}
+
+void Robot::beginData(){
+    this->validData.front = MAX_VALID_DISTANCE;
+    this->validData.left = MAX_VALID_DISTANCE;
+    this->validData.right = MAX_VALID_DISTANCE;
+
+
+}
+
+void Robot::begin(){
+    this->beginComms();
+    delay(1000);
+    this->ui.begin();
+    this->ackermann.begin();
+    this->beginData();
+
+    while (this->ui.buttonRead() == false) {
+    if(this->updateSensors() == true){
+    this->ui.neoColor(0,255,0);
+    }
+    if (this->ui.buttonRead() == true) {
+
+        this->ui.neoColor(0,0,255);
+        this->ui.buzzSound(1);
+    }
+    }
+    this->imu.setSetPoint(0); 
+}
+
+bool Robot::evadeUntilEdge(){
+    // si no esta viendo pilar y la distancia al frente es menor que 1000 y mayor que 500
+    if(validData.front < 1000  && validData.front < 500 && !isSeeingObject()){
+        return 1;
+    }
+    else if(!isSeeingObject()){ // si no esta viendo pilar sigue derecho
+        goStraightByIMUCM();
+        return 0;
+    }
+    // si esta viendo pilar evadir
+
+    // si es verde evade derecha
+    // si es rojo evade izquierda
+    return 0;
+}
+
+bool Robot::goStraightByIMUCM(){
+    float error = imu.getError();
+    float theta = error * 1.0f;
+    ackermann.setSteeringAngle(theta);
+    
+    if(move.updateCM()){
+        taskStatus = 0;
+        return true;
+    }
+    return false;
+}
+
+void Robot::taskGoStraightByIMUCM(float travelCM,float speed,float acceleration,float deacceleration, float initSpeed, float finalSpeed){
+    move.setTask(travelCM,speed,acceleration,deacceleration,initSpeed,finalSpeed);
+    taskStatus = 5;
 }

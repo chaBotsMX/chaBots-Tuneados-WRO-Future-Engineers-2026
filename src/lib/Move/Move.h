@@ -24,7 +24,7 @@ struct MoveProfile {
 class Move {
 public:
     Move();
-  
+    MotorController controller;
     bool updateCM();
     void setTask(float distanceCM, float speedCMperS, float accelerationCMperS2, float decelerationCMperS2, float initialSpeedCMperS, float finalSpeedCMperS);
     void driveAtPWM(int pwm);
@@ -34,7 +34,7 @@ public:
         return robotSpeed;
     }
 private:
-    MotorController controller;
+
     elapsedMillis speedTimer;
     MoveProfile profile;
     const int MIN_SPEED = 10; // Minimum speed in cm/s

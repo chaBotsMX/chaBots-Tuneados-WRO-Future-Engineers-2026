@@ -17,6 +17,7 @@
 #include <Move.h>
 #include "IMU.h"
 #include "TrajectoryController.h"
+#include "ControlValues.h"
 
 #define IMU_BAUD_RATE 115200
 #define XIAO_BAUD_RATE 2000000
@@ -59,6 +60,20 @@ public:
     void taskGoStraighUntilEdge();
 
     void goStraighUntilEdge();
+    
+    void steerByStanley(float stanleyWallGain, float stanleyHeadingGain);
+
+    void beginData();
+
+    void begin();
+
+    bool evadeUntilEdge();
+
+    bool isSeeingObject();
+
+    bool goStraightByIMUCM();
+
+    void taskGoStraightByIMUCM(float travelCM,float speed,float acceleration,float deacceleration, float initSpeed, float finalSpeed);
 
     int taskStatus = 0;
     int frontDistance = 0;
@@ -66,8 +81,10 @@ public:
     int initialSetPoint = 0;
 private:
 
-
+    int evadedCounter = 0;
     int wallDistance = 200;
+
+    int cmTarget = 0;
 
 };
 

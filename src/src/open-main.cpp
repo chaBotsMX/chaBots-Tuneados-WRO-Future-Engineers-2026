@@ -5,27 +5,11 @@ Robot robot;
 int taskNumber = 0;
 int lap = 0;
 int finish = 0;
+
+
 void setup() {
   // put your setup code here, to run once:
-  robot.beginComms();
-  delay(1000);
-  robot.ui.begin();
-  robot.ackermann.begin();
-  robot.validData.front = 3000;
-  robot.validData.left = 3000;
-  robot.validData.right = 3000;
-
-  while (robot.ui.buttonRead() == false) {
-    if(robot.updateSensors() == true){
-    robot.ui.neoColor(0,255,0);
-  }
-    if (robot.ui.buttonRead() == true) {
-  
-      robot.ui.neoColor(0,0,255);
-      robot.ui.buzzSound(1);
-    }
-  }
-  robot.imu.setSetPoint(0);
+  robot.begin();
 }
 
 void loop() {
@@ -37,11 +21,14 @@ void loop() {
  }
   if(robot.taskStatus == 0){
     taskNumber++;
-
+    robot.ui.buzzSound(1);
     if (taskNumber == 1 && lap == 0){
+      robot.taskGoStraightByIMUCM(80,30,10,10,0,0);
+    }
+    else if(taskNumber == 2 && lap == 0){
       robot.taskGoStraighUntilEdge();
     }
-    else if(taskNumber == 1){
+    else if (taskNumber== 0){
       robot.taskFollowWallByCm(130,80,30,30,0,0);
     }
     else if (taskNumber == 2){
@@ -52,7 +39,7 @@ void loop() {
       robot.taskTurn();
     }
     else if(lap == 11){
-      robot.move.driveAtPWM(-100);
+      robot.taskFollowWallByCm(30,80,30,30,0,0);
       delay(1000);
       robot.move.driveAtPWM(0);
       finish = 1;
@@ -61,10 +48,11 @@ void loop() {
       lap++;
       taskNumber = 0;
     }
+
+    
   }
   else{
     robot.executeTask();
   }
 
 }
-

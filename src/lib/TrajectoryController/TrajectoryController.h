@@ -16,8 +16,12 @@ class TrajectoryController{
 public:
     TrajectoryController();
     float stanley(float wallError, float imuError, float speed, float stanleyGain, float headingGain);
-
+    float tangentEvasion(float imuError, float direction, float obstacleAngle,float obstacleSecurityRadio, float distanceToObstacle);
 private:
+    float lastEvasionError = 0;
+
+    elapsedMillis deltaEvasion;
+
 };
 
  #endif
