@@ -89,7 +89,7 @@ public:
 private:
 
     int evadedCounter = 0;
-    int wallDistance = 250;
+    int wallDistance = 300;
 
     int cmTarget = 0;
 

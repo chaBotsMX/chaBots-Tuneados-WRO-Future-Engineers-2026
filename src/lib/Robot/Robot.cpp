@@ -67,13 +67,19 @@ bool Robot::followWallUntilWall(){
     steerByStanley(0.002f, 1.0f);
 
     frontDistance = validData.front;
-
-    if(frontDistance < 900 && frontDistance > 400){
+    int innerWall = 0;
+    if(direction == 1){
+        innerWall = data.left;
+    }
+    else{
+        innerWall = data.right;
+    }
+    if(frontDistance < 600 && frontDistance > 400 && innerWall > 3000){
         taskStatus = 0;
         return true;
     }
-    else if( frontDistance > 1000){
-        move.driveAtSpeed(50,1,0.1,move.getCurrentSpeed());
+    else if( frontDistance > 600 || innerWall < 3000){
+        move.driveAtSpeed(70,1,0.1,move.getCurrentSpeed());
 
         return false;
     }
@@ -138,7 +144,13 @@ void Robot::turn(){
     if(abs(error) < 5){
         taskStatus = 0;
     }
-    float theta = imu.getError() * 0.3;
+     float theta = 0;
+    if(direction == 1){ 
+        theta = imu.getError() * 0.5;
+    }
+    else{
+        theta = imu.getError() * 0.5; 
+    }
     ackermann.setSteeringAngle(theta);
     move.driveAtPWM(-100);
 
@@ -234,7 +246,7 @@ void Robot::taskGoStraightByIMUCM(float travelCM,float speed,float acceleration,
 }
 
 bool Robot::goToEdge(){
-    move.driveAtPWM(-50);
+    move.driveAtPWM(-70);
     if(validData.front < 300){
         ui.buzzSound(1);
         decideDir(); 

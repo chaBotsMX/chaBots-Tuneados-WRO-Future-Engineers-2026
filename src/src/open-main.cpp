@@ -37,7 +37,8 @@ void loop() {
  }
   if(robot.taskStatus == 0){
     taskNumber++;
-
+    robot.ui.buzzSound(1);
+    robot.validData.front = 3000;
     if (taskNumber == 1 && lap == 0){
       robot.taskGoStraightByIMUCM(70,50,30,30,0,0);
     }
@@ -49,9 +50,11 @@ void loop() {
     }
     else if(taskNumber == 2){
       robot.taskFollowWallUntilWall();
+      robot.ui.buzzSound(3,1000,1000);
     }
     else if (taskNumber == 3){
       robot.validData.front = 3000;
+      robot.ui.buzzSound(2,1000,1000);
       robot.taskTurn();
     }
     else if(lap == 11){
