@@ -10,7 +10,7 @@
 #include "TOF4Walls.h"
 #include <algorithm>
 //Selected zonea for detecntion of walls, 43 and 44 are the central zones for 8x8 resolution
-const uint8_t TOF4Walls::CENTRAL_ZONES[NUM_LOOKUP_ZONES] = {43, 44};
+const uint8_t TOF4Walls::CENTRAL_ZONES[NUM_LOOKUP_ZONES] = {35, 36};
 
 TOF4Walls::TOF4Walls(TwoWire& wire,
                      int lpnFront,
@@ -19,9 +19,9 @@ TOF4Walls::TOF4Walls(TwoWire& wire,
                      int lpnBack)
     : _wire(&wire),
       _front(&wire, lpnFront),
-      _back(&wire, lpnBack),
+      _right(&wire, lpnRight),
       _left(&wire, lpnLeft),
-      _right(&wire, lpnRight) {
+      _back(&wire, lpnBack) {
     _lpnPins[0] = lpnFront;
     _lpnPins[1] = lpnRight;
     _lpnPins[2] = lpnLeft;
@@ -75,7 +75,7 @@ bool TOF4Walls::initOne(VL53L8CX& sensor, int lpnPin, uint8_t newAddress, uint8_
 
 void TOF4Walls::update() {
     updateOne(_front, FRONT);
-    updateOne(_back,  BACK);
+    updateOne(_right,  RIGHT);
     updateOne(_left,  LEFT);
 }
 

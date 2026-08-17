@@ -75,16 +75,25 @@ public:
 
     void taskGoStraightByIMUCM(float travelCM,float speed,float acceleration,float deacceleration, float initSpeed, float finalSpeed);
 
+    bool goToEdge();
+
+    void taskGoToEdge();
+
+    void decideDir();
     int taskStatus = 0;
     int frontDistance = 0;
 
     int initialSetPoint = 0;
+    // -1 es en sentido de las manecillas del reloijs, +1 es en el sentido opuesto a las manecillas
+    int direction = 0;
 private:
 
     int evadedCounter = 0;
-    int wallDistance = 200;
+    int wallDistance = 250;
 
     int cmTarget = 0;
+
+
 
 };
 

@@ -12,9 +12,9 @@
 
 #define INITIALIZE_DELAY 1000
 constexpr int LPN_FRONT = D2;
-constexpr int LPN_RIGHT  = D3;
+constexpr int LPN_RIGHT  = D1;
 constexpr int LPN_LEFT  = D0;
-constexpr int LPN_BACK = D1;
+constexpr int LPN_BACK = D3;
 
 
 
