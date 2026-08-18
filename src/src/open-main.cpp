@@ -11,9 +11,9 @@ void setup() {
   delay(1000);
   robot.ui.begin();
   robot.ackermann.begin();
-  robot.validData.front = 3000;
-  robot.validData.left = 3000;
-  robot.validData.right = 3000;
+  robot.validData.front = MAX_VALID_DISTANCE;
+  robot.validData.left = MAX_VALID_DISTANCE;
+  robot.validData.right = MAX_VALID_DISTANCE;
 
   while (robot.ui.buttonRead() == false) {
     if(robot.updateSensors() == true){
@@ -38,9 +38,9 @@ void loop() {
   if(robot.taskStatus == 0){
     taskNumber++;
     robot.ui.buzzSound(1);
-    robot.validData.front = 3000;
+    robot.validData.front = MAX_VALID_DISTANCE;
     if (taskNumber == 1 && lap == 0){
-      robot.taskGoStraightByIMUCM(70,50,30,30,0,0);
+      robot.taskGoStraightByIMUCM(FIRST_GO_STRAIGHT_DISTANCE,FIRST_GO_STRAIGHT_SPEED,30,30,0,0);
     }
     else if(taskNumber == 2 && lap == 0){
       robot.taskGoToEdge();
@@ -53,7 +53,7 @@ void loop() {
       robot.ui.buzzSound(3,1000,1000);
     }
     else if (taskNumber == 3){
-      robot.validData.front = 3000;
+      robot.validData.front = MAX_VALID_DISTANCE;
       robot.ui.buzzSound(2,1000,1000);
       robot.taskTurn();
     }
