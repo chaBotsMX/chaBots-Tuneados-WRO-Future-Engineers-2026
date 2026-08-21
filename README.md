@@ -1053,13 +1053,197 @@ This section describes the hardware that is installed in the final robot and how
 
 The XIAO can also transmit telemetry during development. Wireless functions are disabled during official runs; the competition system does not depend on an external computer or network.
 
-### Power Architecture
+### Power Architecture and Consumption
 
-- **Main battery:** 3S (11.1 V) LiPo, approximately 1000 mAh.
-- **Motor rail:** the battery supplies the VNH7070AS motor-driver stage.
-- **Regulated rail:** a Pololu S8V9F5 step-up/step-down regulator supplies 5 V at up to 1.5 A to the controllers, encoders, RGB LED, and steering servo.
-- **Sensor logic:** the Teensy 4.0 and XIAO ESP32-C6 provide the 3.3 V logic interfaces required by the sensors.
-- **Noise control:** local decoupling, short return paths, ground pours, and stitching vias reduce interference from the motor and servo.
+The robot uses a 3S LiPo battery with a nominal voltage of 11.1 V. The electrical system is divided into three main power rails:
+
+1. **Battery rail — 11.1 V nominal:** motor driver and drive motor.
+2. **Regulated 5 V rail:** Teensy, XIAO ESP32-C6, OpenMV camera, RGB LED, encoders, and steering servo.
+3. **Regulated 3.3 V rail:** four VL53L8CX ToF sensor modules.
+
+The BNO085 IMU is powered from the Teensy's 3.3 V output and is therefore not connected to the external 3.3 V regulator.
+
+Power is expressed in watts:
+
+$$
+P = V \times I
+$$
+
+Energy stored in the battery is expressed in watt-hours:
+
+$$
+E = V \times Ah
+$$
+
+For the 11.1 V, 1000 mAh battery:
+
+$$
+E = 11.1\ V \times 1\ Ah = 11.1\ Wh
+$$
+
+#### Component Power Budget
+
+| Load | Supply | Normal or design current | Peak current used for design | Peak power | Notes |
+|---|---:|---:|---:|---:|---|
+| Teensy 4.0 | 5 V | 100 mA | 100 mA | 0.50 W | Approximately 100 mA at 600 MHz |
+| XIAO ESP32-C6 | 5 V | — | 250 mA | 1.25 W | Conservative design value; Wi-Fi is disabled during normal operation |
+| WS2812B RGB LED | 5 V | 25 mA | 25 mA | 0.125 W | Based on the configured brightness; full-white current can be higher |
+| OpenMV H7 | 5 V | 160 mA | 170 mA | 0.85 W | Conservative input-side budget; final value must be measured at VIN |
+| HS-85MG steering servo | 5 V | 240 mA | 1.2 A | 6.00 W | 1.2 A is a conservative transient design value, not a manufacturer-published stall current |
+| Four VL53L8CX modules | 3.3 V | 400 mA total | 600 mA total | 1.98 W | Approximately 100 mA typical and 150 mA peak per module |
+| BNO085 IMU | Teensy 3.3 V output | 12.5 mA | 12.5 mA | 0.041 W | Supplied through the Teensy; excluded from the external 3.3 V rail total |
+| Pololu 25D HP motor | Battery rail | 300 mA no-load | 1.5 A design operating current | 16.65 W at 11.1 V | Motor stall current is approximately 5 A |
+
+The motor's 1.5 A value is the expected high-load operating current used for the main power estimate. It must not be confused with the approximately 5 A stall current, which is treated separately as a short-duration transient.
+
+#### 5 V Rail
+
+The normal estimated current, including the servo's published running current, is:
+
+$$
+I_{5V,normal} = 0.100 + 0.250 + 0.025 + 0.170 + 0.240 = 0.785\ A
+$$
+
+$$
+P_{5V,normal} = 5\ V \times 0.785\ A = 3.925\ W
+$$
+
+Using the 1.2 A servo transient as the design condition:
+
+$$
+I_{5V,peak} = 0.100 + 0.250 + 0.025 + 0.170 + 1.200 = 1.745\ A
+$$
+
+$$
+P_{5V,peak} = 5\ V \times 1.745\ A = 8.725\ W
+$$
+
+A small additional margin is required for the BNO085 because it is powered through the Teensy's onboard 3.3 V regulator. Therefore, the practical 5 V design budget is approximately **1.75 A and 8.8 W**.
+
+The 5 V rail uses a **Pololu D24V50F5** regulator, rated for approximately 5 A. At a 1.75 A output load, the regulator operates at approximately 35% of its nominal current capacity.
+
+Assuming 90% efficiency:
+
+$$
+P_{in,5V} = \frac{8.8\ W}{0.90} \approx 9.78\ W
+$$
+
+$$
+P_{loss,5V} = 9.78 - 8.8 \approx 0.98\ W
+$$
+
+#### 3.3 V ToF Rail
+
+Each VL53L8CX module uses approximately 100 mA during typical continuous ranging and may reach approximately 150 mA.
+
+For four sensors:
+
+$$
+I_{3.3V,typical} = 4 \times 0.100 = 0.400\ A
+$$
+
+$$
+P_{3.3V,typical} = 3.3\ V \times 0.400\ A = 1.32\ W
+$$
+
+For the peak design condition:
+
+$$
+I_{3.3V,peak} = 4 \times 0.150 = 0.600\ A
+$$
+
+$$
+P_{3.3V,peak} = 3.3\ V \times 0.600\ A = 1.98\ W
+$$
+
+The ToF rail uses a **Pololu D24V10F3**, rated for approximately 1 A. A 600 mA peak load uses 60% of its nominal current capacity.
+
+Assuming 87% efficiency:
+
+$$
+P_{in,3.3V} = \frac{1.98\ W}{0.87} \approx 2.28\ W
+$$
+
+$$
+P_{loss,3.3V} = 2.28 - 1.98 \approx 0.30\ W
+$$
+
+Because the VL53L8CX carrier boards are powered close to their minimum accepted input voltage, the voltage must also be measured directly at the sensor connectors under maximum load to verify that wiring losses do not reduce it excessively.
+
+#### Motor Rail
+
+The motor is connected to the 3S battery through the VNH7070AS motor driver.
+
+At the selected 1.5 A design operating current and the battery's nominal voltage:
+
+$$
+P_{motor} = 11.1\ V \times 1.5\ A = 16.65\ W
+$$
+
+At stall:
+
+$$
+P_{motor,stall} = 11.1\ V \times 5\ A = 55.5\ W
+$$
+
+Stall is not a normal operating condition, but it must be considered when selecting the battery, motor driver, wiring, connectors, switch, and protection system.
+
+#### Estimated Total Battery Load
+
+Assuming both regulators are connected directly to the battery:
+
+| Section | Output power | Estimated battery input power | Battery current at 11.1 V |
+|---|---:|---:|---:|
+| 5 V regulated rail | 8.8 W | 9.78 W | 0.88 A |
+| 3.3 V regulated rail | 1.98 W | 2.28 W | 0.21 A |
+| Motor at design load | 16.65 W | 16.65 W | 1.50 A |
+| **Estimated total** | — | **28.71 W** | **2.59 A** |
+
+This estimate does not yet include the motor driver's conduction losses, regulator quiescent current, wiring losses, or battery voltage sag. The real battery input will therefore be slightly higher.
+
+With an ideal 11.1 Wh battery:
+
+$$
+Runtime_{ideal} = \frac{11.1\ Wh}{28.71\ W} = 0.387\ h \approx 23.2\ minutes
+$$
+
+This value is only a theoretical continuous-load estimate. Real runtime will be lower because of acceleration peaks, steering activity, battery discharge characteristics, voltage sag, and the required safety reserve.
+
+During a motor stall, the complete system could temporarily demand approximately:
+
+$$
+I_{stall,total} \approx 5.0 + 0.88 + 0.21 = 6.09\ A
+$$
+
+Therefore, the 1000 mAh battery must support more than 6.1 A without excessive voltage drop. This corresponds to an absolute theoretical minimum of approximately 6.1C, although a substantially higher battery discharge rating should be used to provide adequate margin.
+
+#### Power Integrity and Noise Control
+
+Motor and servo current transients can introduce voltage drops and electrical noise into the logic and sensor rails. The PCB therefore uses:
+
+- Local decoupling capacitors near each controller and sensor connector.
+- Bulk capacitance close to the servo and regulator outputs.
+- Short and wide high-current traces.
+- Separate high-current return paths for the motor and servo.
+- Ground pours connected with stitching vias.
+- A common ground reference between controllers and sensors.
+- Physical separation between motor-current paths and sensitive sensor signals.
+- Voltage and current measurements under acceleration, hard steering, and motor-stall test conditions.
+
+#### Measurements to Be Added
+
+The calculated budget will be validated experimentally after the final PCB and wiring assembly are completed.
+
+| Test condition | Battery voltage | Battery current | 5 V rail | 3.3 V rail | Result |
+|---|---:|---:|---:|---:|---|
+| Electronics idle | TBD | TBD | TBD | TBD | TBD |
+| Sensors and camera active | TBD | TBD | TBD | TBD | TBD |
+| Motor running straight | TBD | TBD | TBD | TBD | TBD |
+| Maximum steering movement | TBD | TBD | TBD | TBD | TBD |
+| Acceleration from rest | TBD | TBD | TBD | TBD | TBD |
+| Brief controlled motor stall | TBD | TBD | TBD | TBD | TBD |
+
+Component values were taken from the manufacturers' documentation for the [Pololu D24V50F5](https://www.pololu.com/product/2851), [Pololu D24V10F3](https://www.pololu.com/product/2830), [Pololu VL53L8CX carrier](https://www.pololu.com/product/3419), [Teensy 4.0](https://www.pjrc.com/store/teensy40.html), [OpenMV H7](https://openmv.io/products/openmv-cam-h7), [HiTEC HS-85MG](https://www.hiteccs.com/actuators/product-details/HS-85MG), and [Pololu 25D HP motor](https://www.pololu.com/product/3203/resources). Conservative or assumed values are identified in the table and will be replaced by measurements from the assembled robot.
 
 ### Main PCB
 
@@ -1094,7 +1278,7 @@ The board uses an XT30 battery connector and includes the main controller interf
 <td>
 <h4>Power Delivery</h4>
 <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Power%20Delivery.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;" alt="Power-delivery schematic">
-<p style="font-size: 0.9em; margin-top: 0.5em;">XT30 battery connector, 6 A slide switch, Pololu S8V9F5 regulator, filtered servo output, and motor output.</p>
+<p style="font-size: 0.9em; margin-top: 0.5em;">XT30 battery connector, 6 A slide switch, Pololu D24V50F5 5 V regulator, Pololu D24V10F3 3.3 V regulator, filtered servo output, and motor output.</p>
 </td>
 </tr>
 <tr>
