@@ -17,4 +17,9 @@ struct SteeringCalibration {
     float servoOffset;
 };
 
+enum class DIRECTIONS {
+    CLOCKWISE,
+    ANTICLOCKWISE
+};
+
 #endif

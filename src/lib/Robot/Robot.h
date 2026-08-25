@@ -18,6 +18,7 @@
 #include "IMU.h"
 #include "TrajectoryController.h"
 #include "ControlValues.h"
+#include "DataTypes.h" 
 
 #define IMU_BAUD_RATE 115200
 #define XIAO_BAUD_RATE 2000000
@@ -79,21 +80,35 @@ public:
 
     void taskGoToEdge();
 
+    void selectTask();
+
     void decideDir();
-    int taskStatus = 0;
     int frontDistance = 0;
 
     int initialSetPoint = 0;
     // -1 es en sentido de las manecillas del reloijs, +1 es en el sentido opuesto a las manecillas
-    int direction = 0;
+    DIRECTIONS direction = DIRECTIONS::ANTICLOCKWISE;
+
 private:
+    enum class TASK {
+        UNDEFINED,
+        GOSTRAIGHTTOEDGE,
+        GETCLOSETOEDGE,
+        FOLLOWWALL,
+        FOLLOWUNTILEDGE,
+        OPENTURN,
+        OPENENDING
+        
+    };
+
 
     int evadedCounter = 0;
     int wallDistance = 300;
 
     int cmTarget = 0;
-
-
+    TASK taskStatus = TASK::UNDEFINED;
+    int lapCount = 0;
+    bool finish = false;
 
 };
 
