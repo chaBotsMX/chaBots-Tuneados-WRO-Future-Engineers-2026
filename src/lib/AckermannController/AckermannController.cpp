@@ -13,7 +13,7 @@ AckermannController::AckermannController()
 
 void AckermannController::begin()
 {
-    steeringServo.attach(12);
+    steeringServo.attach(SERVO_PIN);
     steeringServo.write(IDLE_STEERING_ANGLE);
 }
 

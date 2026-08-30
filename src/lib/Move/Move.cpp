@@ -11,6 +11,9 @@
 
 
 Move::Move(){
+}
+
+void Move::begin(){
     controller.begin();
 }
 
@@ -54,11 +57,11 @@ bool Move::updateCM(){
         profileSpeed = constrain(profileSpeed, MIN_SPEED, CMSpeedTarget); //minimum positive output to avoid motor stuck in 0 at init of the task.
         this->driveAtSpeed(profileSpeed, 5, 0, CMcurrent);
         return false;
-    } else {
-        // Stop the motor
-        controller.brake();
-        return true;
-    }
+    } 
+    // Stop the motor
+    controller.brake();
+    return true;
+    
 }
 
 //This function takes a PWM value and sets the motor direction and speed accordingly.

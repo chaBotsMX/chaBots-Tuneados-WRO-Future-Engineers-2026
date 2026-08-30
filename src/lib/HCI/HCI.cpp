@@ -10,18 +10,31 @@
 
 
  HCI::HCI():
-        pixels(NUM_NEOPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800)
+        pixels(NUM_NEOPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800),
+        display(DISPLAY_WIDTH, DISPLAY_HEIGHT, &Wire, DISPLAY_RESET_PIN)
  {}
 
 void HCI::begin(){
     pinMode(BUTTON,INPUT);
     pinMode(BUZZER,OUTPUT);
-    pinMode(LED_PIN,OUTPUT);
 
     pixels.begin();
-    pixels.setPixelColor(0, pixels.Color(255, 0, 0)); // Set the LED color to red
+    pixels.setPixelColor(NEOPIXEL_INDEX, pixels.Color(255, 0, 0)); // Set the LED color to red
     pixels.show(); // Update the LED to show the color
 
+    Wire.begin();
+    Wire.setClock(400000); // 400kHz Fast Mode
+     
+    displayReady = display.begin(SSD1306_SWITCHCAPVCC, DISPLAY_ADDRESS);
+    if (displayReady) {
+        display.clearDisplay();
+        display.setTextSize(1);
+        display.setTextColor(SSD1306_WHITE);
+        display.setTextWrap(false);
+        display.display();
+    } else {
+        Serial.println("[HCI] SSD1306 not found at 0x3C");
+    }
 }
 
 bool HCI::buttonRead(){
@@ -42,3 +55,32 @@ void HCI::neoColor(int r, int g, int b){
     pixels.show(); // Update the LED to show the color
 }
 
+bool HCI::isDisplayReady() const {
+    return displayReady;
+}
+
+void HCI::showDebug(const char* currentState, const char* previousState,
+                    uint16_t front, uint16_t left, uint16_t right,
+                    float yaw, float targetYaw){
+    if (!displayReady) {
+        return;
+    }
+
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("CURRENT STATE:");
+    display.println(currentState);
+    display.println("PREVIOUS STATE:");
+    display.println(previousState);
+    display.print("F:");
+    display.print(front);
+    display.print(" L:");
+    display.println(left);
+    display.print("R:");
+    display.println(right);
+    display.print("YAW:");
+    display.println(yaw, 1);
+    display.print("TARGET:");
+    display.println(targetYaw, 1);
+    display.display();
+}

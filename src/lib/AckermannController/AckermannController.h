@@ -16,7 +16,7 @@
 #define MAX_SERVO_OFFSET    20.0f
 #define IDLE_STEERING_ANGLE 80.0f
 
-
+#define SERVO_PIN 22
 
 class AckermannController {
 public:

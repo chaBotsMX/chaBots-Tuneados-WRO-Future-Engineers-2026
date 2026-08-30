@@ -1,5 +1,5 @@
 #include "TOF4Walls.h"
-#include "Wire.h"
+#include <SPI.h>
 #include "DebugLog.h"
 
 #define LED_PIN 13
@@ -11,15 +11,15 @@
 #define TX_PIN D6
 
 #define INITIALIZE_DELAY 1000
-constexpr int LPN_FRONT = D2;
-constexpr int LPN_RIGHT  = D1;
-constexpr int LPN_LEFT  = D0;
-constexpr int LPN_BACK = D3;
+constexpr int CS_FRONT = D2;
+constexpr int CS_RIGHT = D1;
+constexpr int CS_LEFT = D0;
+constexpr int CS_BACK = D3;
 
 
 
 
-TOF4Walls tofs(Wire, LPN_FRONT, LPN_RIGHT, LPN_LEFT, LPN_BACK);
+TOF4Walls tofs(SPI, CS_FRONT, CS_RIGHT, CS_LEFT, CS_BACK);
 
 void setup() {
     //pinMode(LED_PIN,OUTPUT);
@@ -33,7 +33,7 @@ void setup() {
     DEBUG_LOGL("Initing...");
 
     //initialize the TOF sensors, if any of them fails to initialize, the program will halt and print an error message.
-    if (!tofs.begin(60)) {
+    if (!tofs.begin(15)) {
         DEBUG_LOGL("Error, pls reboot");
         while (true) {  }
     }
@@ -43,10 +43,12 @@ void setup() {
 
 void loop() {
     tofs.update();
-    if (tofs.hasFreshData(TOF4Walls::FRONT) || tofs.hasFreshData(TOF4Walls::LEFT) || tofs.hasFreshData(TOF4Walls::RIGHT) ) {
+    if (tofs.hasFreshData(TOF4Walls::FRONT) || tofs.hasFreshData(TOF4Walls::LEFT) ||
+        tofs.hasFreshData(TOF4Walls::RIGHT) || tofs.hasFreshData(TOF4Walls::BACK)) {
         uint16_t front = (uint16_t)tofs.getDistance(TOF4Walls::FRONT);
         uint16_t left  = (uint16_t)tofs.getDistance(TOF4Walls::LEFT);
         uint16_t right = (uint16_t)tofs.getDistance(TOF4Walls::RIGHT);
+        uint16_t back  = (uint16_t)tofs.getDistance(TOF4Walls::BACK);
 
         DEBUG_LOG("F: ");
         DEBUG_LOG(front);
@@ -65,9 +67,8 @@ void loop() {
         uint8_t lowByteRight = lowByte(right);
         uint8_t highByteRight = highByte(right);
 
-        //placeholder until back sensor is implemented
-        uint8_t lowByteBack = 0; 
-        uint8_t highByteBack = 0;
+        uint8_t lowByteBack = lowByte(back);
+        uint8_t highByteBack = highByte(back);
 
         uint8_t checksum = lowByteFront + highByteFront + lowByteLeft + highByteLeft + lowByteRight + highByteRight + lowByteBack + highByteBack;
 

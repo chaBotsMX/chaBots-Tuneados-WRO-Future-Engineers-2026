@@ -3,7 +3,6 @@
 
 //Constants 
 #define MAX_VALID_DISTANCE 3000
-
 //First lap
 
 #define FIRST_GO_STRAIGHT_DISTANCE 70

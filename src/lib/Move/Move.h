@@ -25,6 +25,7 @@ class Move {
 public:
     Move();
     MotorController controller;
+    void begin();
     bool updateCM();
     void setTask(float distanceCM, float speedCMperS, float accelerationCMperS2, float decelerationCMperS2, float initialSpeedCMperS, float finalSpeedCMperS);
     void driveAtPWM(int pwm);
