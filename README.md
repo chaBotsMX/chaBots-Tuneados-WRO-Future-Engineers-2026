@@ -1,4 +1,5 @@
 
+
 # ChaBots - WRO Future Engineers 2026
 
 
@@ -32,17 +33,6 @@
 
 <img  src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png"  width="40"  alt="YouTube">
 
-</a>
-
-<!-- Página Web (icono de internet) -->
-
-<a  href="https://www.chabots.mx"  target="_blank">
-
-<img  src="https://cdn-icons-png.flaticon.com/512/841/841364.png"  width="40"  alt="Website">
-
-</a>
-
-
 
 This repository contains the documentation for **ChaBots** participation in the **WRO Future Engineers 2026** category. Our robot was designed and built by a Mexican students team, passionate about robotics and education.
 
@@ -73,7 +63,7 @@ This repository contains the documentation for **ChaBots** participation in the 
 
 <div  align="center">
 
-<img  src="">
+<img  src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/t-photos/IMG_5999.jpeg?raw=true">
 
 </div>
 
@@ -933,7 +923,7 @@ The table is the single overview of the completed robot. The R&D chapter explain
 
 ### 6.1 Gearbox
 
-<img  src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/gearbox/gearbox-assembly.png?raw=true">
+<img  src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/gearbox/gearbox-assembly.png?raw=true">
 
 The robot's transmission features a custom-designed gearbox, with the base and gears developed in CAD software and manufactured in-house. For fabrication, the team used a Creality K2 Plus Combo printer, chosen for its reliability in handling engineering-grade materials. The material selected was Polymaker PETG-CF (a carbon-fiber-infused PETG), prized for its high stiffness, dimensional stability, and excellent wear resistance, which are critical for durable mechanical components.
 
@@ -948,13 +938,13 @@ The drive axle consists of 4 mm steel shafts, which were custom-cut from rod sto
 | 6.1.1 Pololu 25D Encoder | The 25D Metal Gearmotor serves as the robust mechanical core of the propulsion system, featuring a high-performance 12V brushed DC motor paired with a 9.7:1 metal spur gearbox. This unit was selected for its exceptional balance of compact form factor and dynamic response. The precision-cut metal gears act as the primary mechanism for torque amplification, achieving a versatile output speed of approximately 600 RPM. Furthermore, the integrated quadrature encoder provides real-time feedback for closed-loop control, ensuring the precise velocity and positional accuracy required for the robot’s agile maneuvering and synchronized movement. | <picture style="display: block; margin: 0 auto;"><img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/gearbox/gearbox-25d-metal-gearmotor-4.4-9.7-encoder.png?raw=true" style="width: 100%;"></picture> |
 | 6.1.2 Base | We designed the base of the gearbox so that the wheel axle is as close as possible to the steering axis in order to make tighter turns. | <picture style="display: block; margin: 0 auto;"><img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/gearbox/gearbox-base.png?raw=true" style="width: 100%;"></picture> |
 | 6.1.3 Gears | The custom-printed double helical gears transfer power from the motor's gearhead output to the wheel axle. This external gear stage was designed with a 1:1 gear ratio. This configuration was chosen because the Maxon motor's integrated gearhead already provided the ideal speed reduction (down to 600 RPM) and torque multiplication. The 1:1 external gears, therefore, act as a direct power transmission, simplifying the design while perfectly matching the motor's output speed to the drive wheels. | <picture style="display: block; margin: 0 auto;"><img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/gearbox/gearbox-gear.png?raw=true" style="width: 100%;"></picture> |
-| 6.1.4 Rim G | The rear traction system features a custom-engineered oversized rhine, specifically designed to compensate for the robot’s geometry and maintain a consistent ground clearance across the chassis. Precision-machined with a dedicated D-shaft coupler, the rim ensures a high-tolerance press-fit onto the motor’s output shaft, eliminating backlash during high-torque maneuvers. Beyond its functional role in leveling the platform, the wheel incorporates an aggressive, aesthetic-driven spoke pattern that aligns with the "tuned" visual identity of the team. This design prioritizes both structural integrity for payload distribution and a high-profile aesthetic that distinguishes the robot’s stance on the field. | <picture style="display: block; margin: 0 auto;"><img src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/gearbox/gearbox-rim-g.png?raw=true" style="width: 100%;"></picture> |
+| 6.1.4 Rim G | The rear traction system features a custom-engineered oversized rhine, specifically designed to compensate for the robot’s geometry and maintain a consistent ground clearance across the chassis. Precision-machined with a dedicated D-shaft coupler, the rim ensures a high-tolerance press-fit onto the motor’s output shaft, eliminating backlash during high-torque maneuvers. Beyond its functional role in leveling the platform, the wheel incorporates an aggressive, aesthetic-driven spoke pattern that aligns with the "tuned" visual identity of the team. This design prioritizes both structural integrity for payload distribution and a high-profile aesthetic that distinguishes the robot’s stance on the field. | <picture style="display: block; margin: 0 auto;"><img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/gearbox/gearbox-rim-g.png?raw=true" style="width: 100%;"></picture> |
 
 
 
 ### 6.2 Steering System
 
-<img  src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/steering-system/steering-system-assembly.png?raw=true">
+<img  src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-assembly.png?raw=true">
 
 For the steering system, the goal was to simplify the mechanism as much as possible, as this would allow for quick and easy manufacturing. However, we decided to make this an Ackermann system, allowing the inner wheel to have a larger angle than the outer wheel. Thanks to this, we were able to prevent the front wheels from slipping when turning.
 
@@ -963,12 +953,12 @@ For the steering system, the goal was to simplify the mechanism as much as possi
 | Part | Description | Image |
 | --- | --- | :---: |
 | 6.2.1 Servo HiTEC HS-85MG | We selected the HiTEC HS-85MG for our robot's Ackermann steering system, primarily due to its robust metal gears (MG). Unlike many standard or smaller servos that use plastic gears, the metal gearing provides the significantly enhanced durability and resistance to stripping that our steering mechanism requires. This is crucial for us to handle the mechanical loads, vibrations, and potential impacts inherent in the system's operation. We also find that this servo packs considerable torque and good precision into a compact "mighty mini" form factor, supported by a top ball bearing. This ensures it provides the strength we need to turn the wheels effectively while maintaining accurate steering angles, minimizing the excessive "slop" or backlash we might see in less robust options. For application, this blend of power, durability, and reliable accuracy in a small package makes it a superior choice over servos that could fail or wear quickly under the demands of steering. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-HS-85MG.png?raw=true" style="width: 100%;"> </picture> |
-| 6.2.2 Base | We designed the base around the servo, so that everything was symmetrical. We also designed the base to be modular and easily attach to the robot's chassis for easy repairs. We 3D printed the base using carbon fiber filament, as we did all the other robot parts, to increase strength. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-base.png?raw=true" style="width: 100%;"> </picture> |
+| 6.2.2 Base | We designed the base around the servo, so that everything was symmetrical. We also designed the base to be modular and easily attach to the robot's chassis for easy repairs. This part is made out of stainless steel in order to balance the robot's center of mass. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-base.png?raw=true" style="width: 100%;"> </picture> |
 | 6.2.3 Servo Connector | We designed the servo connector this way because, as an Ackermann system, the wheels needed to be connected independently of each other. If we used a single connector for the wheels, both would have the same turning angle, but by splitting it, each wheel would turn at a different angle. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-servoconnector.png?raw=true" style="width: 100%;"> </picture> |
 | 6.2.4 Bracket Connectors | As mentioned above, we used two connectors, one per wheel, so they rotated independently.| <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-bracketconnector.png?raw=true" style="width: 100%;"> </picture> |
 | 6.2.5 Stabilizer | This stabilizer bar is to prevent the wheel brackets from having play and to make them more stable. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-stabilizer.png?raw=true" style="width: 100%;"> </picture> |
-| 6.2.6 Wheel Bracket | We designed the L-shaped wheel mount so that the wheels could rotate more easily and not collide with the robot's chassis. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-wheelbracket.png?raw=true" style="width: 100%;"> </picture> |
-| 6.2.7 Rim S | The rim s represents the compact version of our wheel assembly, designed specifically to attach to the front wheel mounts via a bearing. This smaller variant is crucial for maintaining the robot's horizontal alignment, counterbalancing the weight of the larger rear drive wheels to achieve a perfectly level center of gravity. Engineered for low-friction rotation and high maneuverability, the rim features an optimized profile that reduces rotational inertia. Subsequently, we use a mold and A40 polyurethane resin to manufacture the rubber component. This process is shown in the following video: [WRO FutureEngineers Custom Wheels - chaBots NERV](https://youtu.be/8JH6QCOU_B0) | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/steering-system/steering-system-rim-s.png?raw=true" style="width: 100%;"> </picture>|
+| 6.2.6 Wheel Bracket | We designed the wheel mount with an angle in order that the line projected collides in the center of the rear axis. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-wheelbracket.png?raw=true" style="width: 100%;"> </picture> |
+| 6.2.7 Rim S | The rim s represents the compact version of our wheel assembly, designed specifically to attach to the front wheel mounts via a bearing. This smaller variant is crucial for maintaining the robot's horizontal alignment, counterbalancing the weight of the larger rear drive wheels to achieve a perfectly level center of gravity. Engineered for low-friction rotation and high maneuverability, the rim features an optimized profile that reduces rotational inertia. Subsequently, we use a mold and A40 polyurethane resin to manufacture the rubber component. This process is shown in the following video: [WRO FutureEngineers Custom Wheels - chaBots NERV](https://youtu.be/8JH6QCOU_B0) | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/steering-system/steering-system-rim-s.png?raw=true" style="width: 100%;"> </picture>|
 
 
 
@@ -976,7 +966,7 @@ For the steering system, the goal was to simplify the mechanism as much as possi
 
 
 
-<img  src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/cam-mount/cam-support.png?raw=true">
+<img  src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/cam-mount/cam-support.png?raw=true">
 
 A simple fixed-angle bracket designed to mount the camera onto the robot chassis.
 
@@ -987,15 +977,15 @@ A simple fixed-angle bracket designed to mount the camera onto the robot chassis
 
 | Part | Description | Image |
 | --- | --- | :---: |
-| 6.4.1 Chassis Base | The chassis is the robot's main structure, as all other systems are mounted on it. A modular design was chosen to facilitate assembly and maintenance. The chassis is made of carbon fiber filament. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/chassis/chassis-base.png?raw=true" style="width: 100%;"> </picture> |
-| 6.4.2 Front Bumper | Designed for front-end integration, this custom bumper acts as a protective shield for the robot's chassis by absorbing direct frontal impacts and preventing damage to internal electronics or sensors during navigation. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/other-components/front-bumper.png?raw=true" style="width: 100%;"> </picture> |
-| 6.4.3 Rear Bumper | Designed for rear-end protection, this custom bumper shields the back of the chassis and internal components from impacts during reversing maneuvers or wall contact. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/other-components/rear-bumper.png?raw=true" style="width: 100%;"> </picture> |
+| 6.4.1 Chassis Base | The chassis is the robot's main structure, as all other systems are mounted on it. A modular design was chosen to facilitate assembly and maintenance. The chassis is made of stainless steel. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/chassis/chassis-base.png?raw=true" style="width: 100%;"> </picture> |
+| 6.4.2 Front Bumper | Designed for front-end integration, this custom bumper acts as a protective shield for the robot's chassis by absorbing direct frontal impacts and preventing damage to internal electronics or sensors during navigation. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/other-components/front-bumper.png?raw=true" style="width: 100%;"> </picture> |
+| 6.4.3 Rear Bumper | Designed for rear-end protection, this custom bumper shields the back of the chassis and internal components from impacts during reversing maneuvers or wall contact. | <picture style="display: block; margin: 0 auto;"> <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/other-components/rear-bumper.png?raw=true" style="width: 100%;"> </picture> |
 
 
 
 ### 6.5 Assembly
 
-<img  src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/assemblys/v-assembly-orthogonal.png?raw=true"  alt="Robot Assembly Diagram">
+<img  src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/assemblys/v-assembly-orthogonal.png?raw=true"  alt="Robot Assembly Diagram">
 
 
 
@@ -1005,26 +995,26 @@ The steering system is mounted on the chassis using 20mm-high M3 posts. The gear
   <tbody>
     <tr>
       <td style="width: 50%; padding: 5px;">
-        <img src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/assemblys/v-assembly-front.png?raw=true" alt="Vista Frontal" style="width: 100%; height: auto; display: block;">
+        <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/assemblys/v-assembly-front.png?raw=true" alt="Vista Frontal" style="width: 100%; height: auto; display: block;">
       </td>
       <td style="width: 50%; padding: 5px;">
-        <img src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/assemblys/v-asssembly-back.png?raw=true" alt="Vista Trasera" style="width: 100%; height: auto; display: block;">
-      </td>
-    </tr>
-    <tr>
-      <td style="width: 50%; padding: 5px;">
-        <img src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/assemblys/v-assembly-left.png?raw=true" alt="Vista Izquierda" style="width: 100%; height: auto; display: block;">
-      </td>
-      <td style="width: 50%; padding: 5px;">
-        <img src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/assemblys/v-assembly-right.png?raw=true" alt="Vista Derecha" style="width: 100%; height: auto; display: block;">
+        <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/assemblys/v-asssembly-back.png?raw=true" alt="Vista Trasera" style="width: 100%; height: auto; display: block;">
       </td>
     </tr>
     <tr>
       <td style="width: 50%; padding: 5px;">
-        <img src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/assemblys/v-assembly-top.png?raw=true" alt="Vista Superior" style="width: 100%; height: auto; display: block;">
+        <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/assemblys/v-assembly-left.png?raw=true" alt="Vista Izquierda" style="width: 100%; height: auto; display: block;">
       </td>
       <td style="width: 50%; padding: 5px;">
-        <img src="https://github.com/leovillegxs/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/docs-leo/models/assemblys/v-assembly-bottom.png?raw=true" alt="Vista Inferior" style="width: 100%; height: auto; display: block;">
+        <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/assemblys/v-assembly-right.png?raw=true" alt="Vista Derecha" style="width: 100%; height: auto; display: block;">
+      </td>
+    </tr>
+    <tr>
+      <td style="width: 50%; padding: 5px;">
+        <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/assemblys/v-assembly-top.png?raw=true" alt="Vista Superior" style="width: 100%; height: auto; display: block;">
+      </td>
+      <td style="width: 50%; padding: 5px;">
+        <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/assemblys/v-assembly-bottom.png?raw=true" alt="Vista Inferior" style="width: 100%; height: auto; display: block;">
       </td>
     </tr>
   </tbody>
