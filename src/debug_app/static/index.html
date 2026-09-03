@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Monitor WRO · chaBots</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <div>
+          <p class="eyebrow">chaBots · Future Engineers 2026</p>
+          <h1>Monitor de telemetría</h1>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <div id="connectionPill" class="connection-pill is-offline" role="status">
+          <span class="status-dot"></span>
+          <span id="connectionText">Buscando XIAO…</span>
+        </div>
+        <button id="pauseButton" class="control-button" type="button">Pausar gráficas</button>
+        <button id="clearButton" class="control-button subtle" type="button">Limpiar</button>
+      </div>
+    </header>
+
+    <section class="link-strip" aria-label="Estado del enlace">
+      <div class="link-stat">
+        <span class="stat-label">Modo</span>
+        <strong id="modeValue">UDP</strong>
+      </div>
+      <div class="link-stat">
+        <span class="stat-label">Frecuencia</span>
+        <strong><span id="rateValue">—</span> <small>Hz</small></strong>
+      </div>
+      <div class="link-stat">
+        <span class="stat-label">Pérdida</span>
+        <strong><span id="lossValue">—</span> <small>%</small></strong>
+      </div>
+      <div class="link-stat">
+        <span class="stat-label">Edad</span>
+        <strong><span id="ageValue">—</span> <small>ms</small></strong>
+      </div>
+      <div class="link-stat">
+        <span class="stat-label">Secuencia</span>
+        <strong id="sequenceValue">—</strong>
+      </div>
+      <div class="link-stat warning-stat" id="txDropStat">
+        <span class="stat-label">TX Teensy</span>
+        <strong id="txDropValue">Normal</strong>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Estado actual</p>
+          <h2>Lecturas del robot</h2>
+        </div>
+        <p id="lastError" class="error-message" aria-live="polite"></p>
+      </div>
+
+      <div class="metric-grid headline-grid">
+        <article class="metric-card featured-card">
+          <div class="card-heading">
+            <span>Velocidad</span>
+            <span class="metric-icon speed-icon" aria-hidden="true"></span>
+          </div>
+          <div class="hero-reading">
+            <strong id="speedValue">—</strong>
+            <span>cm/s</span>
+          </div>
+          <p id="speedDetail" class="metric-detail">— mm/s</p>
+        </article>
+
+        <article id="obstacleCard" class="metric-card">
+          <div class="card-heading">
+            <span>Obstáculo</span>
+            <span id="visionBadge" class="mini-badge">VISIÓN —</span>
+          </div>
+          <div class="hero-reading compact">
+            <strong id="obstacleValue">—</strong>
+          </div>
+          <p id="obstacleDetail" class="metric-detail">Esperando datos</p>
+        </article>
+
+        <article class="metric-card">
+          <div class="card-heading"><span>Vuelta</span><span class="card-index">#</span></div>
+          <div class="hero-reading compact">
+            <strong id="lapValue">—</strong>
+          </div>
+          <p id="taskValue" class="metric-detail">Tarea —</p>
+        </article>
+
+        <article class="metric-card">
+          <div class="card-heading"><span>Encoder</span><span class="card-index">ENC</span></div>
+          <div class="hero-reading compact ticks-reading">
+            <strong id="encoderTicksValue">—</strong>
+            <span>ticks</span>
+          </div>
+          <p id="encoderDistanceValue" class="metric-detail">— mm recorridos</p>
+        </article>
+      </div>
+
+      <div class="detail-grid">
+        <article class="panel sensor-panel">
+          <div class="panel-title-row">
+            <div>
+              <p class="eyebrow">TOF</p>
+              <h3>Distancias de sensores</h3>
+            </div>
+            <span class="unit-chip">milímetros</span>
+          </div>
+          <div class="sensor-map" aria-label="Distancias alrededor del robot">
+            <div class="sensor-reading front-reading">
+              <span>Frontal</span><strong id="frontValue">—</strong><small>mm</small>
+            </div>
+            <div class="sensor-reading left-reading">
+              <span>Izquierdo</span><strong id="leftValue">—</strong><small>mm</small>
+            </div>
+            <div class="robot-shape" aria-hidden="true">
+              <span class="robot-arrow"></span>
+              <span class="wheel wheel-lf"></span><span class="wheel wheel-rf"></span>
+              <span class="wheel wheel-lr"></span><span class="wheel wheel-rr"></span>
+            </div>
+            <div class="sensor-reading right-reading">
+              <span>Derecho</span><strong id="rightValue">—</strong><small>mm</small>
+            </div>
+            <div class="sensor-reading rear-reading">
+              <span>Trasero</span><strong id="rearValue">—</strong><small>mm</small>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel compact-panel">
+          <div class="panel-title-row">
+            <div>
+              <p class="eyebrow">Visión</p>
+              <h3>Geometría del obstáculo</h3>
+            </div>
+          </div>
+          <div class="data-list">
+            <div class="data-row">
+              <span>Distancia</span>
+              <strong><span id="obstacleDistanceValue">—</span> <small>px</small></strong>
+            </div>
+            <div class="data-row">
+              <span>Ángulo</span>
+              <strong><span id="obstacleAngleValue">—</span> <small>°</small></strong>
+            </div>
+            <div class="data-row">
+              <span>Lectura fresca</span>
+              <strong id="visionFreshValue">—</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel compact-panel controller-panel">
+          <div class="panel-title-row">
+            <div>
+              <p class="eyebrow">Control</p>
+              <h3>Salidas de dirección</h3>
+            </div>
+            <span id="controllerModeValue" class="unit-chip">—</span>
+          </div>
+          <div class="controller-list">
+            <div class="controller-row stanley-row">
+              <span><i></i>Stanley</span>
+              <strong><span id="stanleyValue">—</span> <small>°</small></strong>
+            </div>
+            <div class="controller-row tangent-row">
+              <span><i></i>Tangencial</span>
+              <strong><span id="tangentialValue">—</span> <small>°</small></strong>
+            </div>
+            <div class="controller-row command-row">
+              <span><i></i>Mando final</span>
+              <strong><span id="steeringValue">—</span> <small>°</small></strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel compact-panel">
+          <div class="panel-title-row">
+            <div>
+              <p class="eyebrow">Movimiento</p>
+              <h3>Estado de actuación</h3>
+            </div>
+          </div>
+          <div class="data-list">
+            <div class="data-row"><span>PWM motor</span><strong id="motorPwmValue">—</strong></div>
+            <div class="data-row"><span>Dirección</span><strong id="directionValue">—</strong></div>
+            <div class="data-row"><span>Tiempo Teensy</span><strong><span id="teensyTimeValue">—</span> <small>s</small></strong></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block chart-section">
+      <div class="section-heading chart-heading">
+        <div>
+          <p class="eyebrow">Historial en vivo</p>
+          <h2>Gráficas</h2>
+        </div>
+        <label class="window-control">
+          Ventana
+          <select id="windowSelect">
+            <option value="10">10 s</option>
+            <option value="20" selected>20 s</option>
+            <option value="30">30 s</option>
+            <option value="60">60 s</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="chart-grid">
+        <article class="chart-card span-two">
+          <div class="chart-title"><h3>Velocidad</h3><span>cm/s</span></div>
+          <canvas id="speedChart" aria-label="Gráfica de velocidad"></canvas>
+        </article>
+        <article class="chart-card span-two">
+          <div class="chart-title"><h3>Sensores TOF</h3><span>mm</span></div>
+          <canvas id="sensorsChart" aria-label="Gráfica de sensores"></canvas>
+        </article>
+        <article class="chart-card">
+          <div class="chart-title"><h3>Distancia aparente al obstáculo</h3><span>px</span></div>
+          <canvas id="obstacleDistanceChart" aria-label="Gráfica de distancia al obstáculo"></canvas>
+        </article>
+        <article class="chart-card">
+          <div class="chart-title"><h3>Ángulo del obstáculo</h3><span>grados</span></div>
+          <canvas id="obstacleAngleChart" aria-label="Gráfica de ángulo del obstáculo"></canvas>
+        </article>
+        <article class="chart-card span-two">
+          <div class="chart-title"><h3>Controladores</h3><span>grados</span></div>
+          <canvas id="controllersChart" aria-label="Gráfica de controladores"></canvas>
+        </article>
+        <article class="chart-card">
+          <div class="chart-title"><h3>Encoder</h3><span>ticks</span></div>
+          <canvas id="encoderChart" aria-label="Gráfica del encoder"></canvas>
+        </article>
+        <article class="chart-card">
+          <div class="chart-title"><h3>Carrera</h3><span>vuelta / obstáculo</span></div>
+          <canvas id="raceChart" aria-label="Gráfica del estado de carrera"></canvas>
+        </article>
+      </div>
+    </section>
+
+    <details class="diagnostics-panel">
+      <summary>Diagnóstico del enlace</summary>
+      <h3 class="diagnostics-heading">Aplicación en la Mac</h3>
+      <div class="diagnostics-grid">
+        <span>Recibidas<strong id="receivedFramesValue">0</strong></span>
+        <span>Perdidas<strong id="lostFramesValue">0</strong></span>
+        <span>Duplicadas<strong id="duplicateFramesValue">0</strong></span>
+        <span>Fuera de orden<strong id="outOfOrderValue">0</strong></span>
+        <span>Reinicios Teensy<strong id="sourceResetsValue">0</strong></span>
+        <span>CRC inválido<strong id="crcErrorsValue">0</strong></span>
+        <span>Mal formadas<strong id="malformedValue">0</strong></span>
+      </div>
+      <h3 class="diagnostics-heading bridge-heading">Puente XIAO ESP32-C6</h3>
+      <div class="diagnostics-grid bridge-grid">
+        <span>Tramas UART válidas<strong id="bridgeValidFramesValue">—</strong></span>
+        <span>CRC UART<strong id="bridgeCrcErrorsValue">—</strong></span>
+        <span>Envoltura UART<strong id="bridgeEnvelopeErrorsValue">—</strong></span>
+        <span>Coalescidas<strong id="bridgeCoalescedValue">—</strong></span>
+        <span>Envío UDP<strong id="bridgeUdpSendErrorsValue">—</strong></span>
+        <span>Recepción UDP<strong id="bridgeUdpReceiveErrorsValue">—</strong></span>
+        <span>Hardware UART<strong id="bridgeUartHardwareErrorsValue">—</strong></span>
+      </div>
+    </details>
+
+    <footer>
+      <span>WRO Telemetry Protocol v1 · 64 bytes</span>
+      <span id="footerState">La interfaz local no envía comandos de control al robot.</span>
+    </footer>
+  </main>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

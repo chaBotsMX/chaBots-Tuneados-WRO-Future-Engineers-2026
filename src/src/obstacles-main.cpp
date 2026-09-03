@@ -1,53 +1,50 @@
 #include "Robot.h"
+#include <SPI.h>
 
 Robot robot;
 
-int taskNumber = 0;
-int lap = 0;
-int finish = 0;
-
-
 void setup() {
   // put your setup code here, to run once:
-  robot.begin();
+  delay(1000);
+  robot.beginComms();
+  robot.ui.begin();
+  robot.ackermann.begin();
+  robot.validData.front = MAX_VALID_DISTANCE;
+  robot.validData.left = MAX_VALID_DISTANCE;
+  robot.validData.right = MAX_VALID_DISTANCE;
+
+ while (robot.ui.buttonRead() == false) {
+    robot.imu.update();
+    if(robot.updateSensors() == true){
+    robot.ui.neoColor(0,255,0);
+  }
+    if (robot.ui.buttonRead() == true) {
+  
+      robot.ui.neoColor(0,0,255);
+      robot.ui.buzzSound(1);
+    }
+  }
+  // Mantener el rumbo real de arranque, no buscar un cero absoluto arbitrario.
+  robot.initialSetPoint = robot.imu.getYaw();
+  robot.imu.setSetPoint(robot.initialSetPoint);
+  robot.move.driveAtPWM(0);
+  robot.ackermann.setSteeringAngle(-50);
+  delay(1000);
 }
 
 void loop() {
-  robot.printData();
   robot.imu.update();
   robot.updateSensors();
- if(finish == 1){
-  return;
- }
-  if(robot.taskStatus == 0){
-    taskNumber++;
+  robot.updateCam();
+  robot.printData();
 
-    if (taskNumber == 1 && lap == 0){
-      robot.taskGoStraighUntilEdge();
-    }
-    else if(taskNumber == 1){
-      robot.taskFollowWallByCm(130,80,30,30,0,0);
-    }
-    else if (taskNumber == 2){
-      robot.taskFollowWallUntilWall();
-    }
-    else if (taskNumber == 3){
-      robot.validData.front = 3000;
-      robot.taskTurn();
-    }
-    else if(lap == 11){
-      robot.taskFollowWallByCm(30,80,30,30,0,0);
-      delay(1000);
-      robot.move.driveAtPWM(0);
-      finish = 1;
-    }
-    else{
-      lap++;
-      taskNumber = 0;
-    }
-  }
-  else{
-    robot.executeTask();
-  }
+  //robot.selectTaskObstacles();
 
+  if (robot.validData.front > 50 &&
+      robot.validData.front <= MAX_VALID_DISTANCE) {
+    robot.move.driveAtPWM(-70);
+  }
+  else {
+    robot.move.driveAtPWM(0);
+  }
 }

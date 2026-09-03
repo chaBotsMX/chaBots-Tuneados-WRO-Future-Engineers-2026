@@ -66,6 +66,7 @@ void AckermannController::setSteeringAngle(float angle)
         -MAX_ACKERMANN_ANGLE,
         MAX_ACKERMANN_ANGLE
     );
+    lastSteeringAngleDeg = angle;
 
     float servoOffset =
         interpolateServoOffset(angle);

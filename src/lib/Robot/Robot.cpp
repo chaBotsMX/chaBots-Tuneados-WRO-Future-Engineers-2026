@@ -9,13 +9,14 @@
  #include "Robot.h"
 
  Robot::Robot()
-    : xiao(Serial5, XIAO_BAUD_RATE),
-      tofs(SPI, CS_FRONT, CS_RIGHT, CS_LEFT, CS_BACK){}
+    :  tofs(SPI, CS_FRONT, CS_RIGHT, CS_LEFT, CS_BACK){}
 
  void Robot::beginComms(){
     Serial.begin(PC_SERIAL_BAUD_RATE);
-    Serial4.begin(IMU_BAUD_RATE); // IMU
+    IMU_SERIAL.begin(IMU_BAUD_RATE); // IMU
     Serial5.begin(XIAO_BAUD_RATE); // TX
+    CAM_SERIAL.begin(CAM_SERIAL_BAUDRATE);
+
     delay(100);
     move.begin();
     delay(100);
@@ -28,6 +29,10 @@
     Serial.println("All TOFs ready");
     delay(1000);
  }
+
+void Robot::updateCam(){
+    camera.update(CAM_SERIAL,vision);
+}
 
 bool Robot::updateSensors(){
     tofs.update();
@@ -105,7 +110,8 @@ void Robot::printData(){
     Serial.print(", back: ");
     Serial.print(validData.back);
     Serial.println(" }");*/
-    Serial.println(move.controller.getDistanceMM());
+    //Serial.println(move.controller.getDistanceMM());
+    Serial.println(vision.obstacleX);
 }
 
 void Robot::steerByStanley(float stanleyWallGain,float stanleyHeadingGain){
@@ -165,6 +171,10 @@ const char* Robot::taskName(TASK task){
         case TASK::OPEN_TURN:          return "OPEN_TURN";
         case TASK::OPEN_ENDING:        return "OPEN_END";
         case TASK::FINISHED:           return "FINISHED";
+        case TASK::EVADE_UNTIL_EDGE:   return "EVADE";
+        case TASK::APPROACH_BLUE_LINE: return "APPROACH_LINE";
+        case TASK::REVERSE_AFTER_BLUE_LINE:return "REVERSE_LINE";
+        case TASK::FORWARD_AFTER_REVERSE:return "FORWARD_LINE";
         default:                       return "UNKNOWN";
     }
 }
@@ -184,6 +194,38 @@ void Robot::changeTask(TASK newTask){
     Serial.println(taskName(taskStatus));
     refreshDebugDisplay();
 }
+
+float Robot::smoothSteeringCommand(float targetAngle){
+    constexpr float maxSteeringSpeedDegreesPerSecond = 100.0f;
+
+    targetAngle = constrain(
+        targetAngle,
+        -MAX_ACKERMANN_ANGLE,
+        MAX_ACKERMANN_ANGLE
+    );
+
+    if(!steeringCommandInitialized){
+        lastSteeringCommand = targetAngle;
+        steeringCommandInitialized = true;
+        steeringCommandAge = 0;
+        return lastSteeringCommand;
+    }
+
+    const float deltaTimeSeconds =
+        static_cast<float>(steeringCommandAge) / 1000.0f;
+    if(deltaTimeSeconds <= 0.0f){
+        return lastSteeringCommand;
+    }
+
+    const float maxChange =
+        maxSteeringSpeedDegreesPerSecond * deltaTimeSeconds;
+    const float requestedChange = targetAngle - lastSteeringCommand;
+    lastSteeringCommand += constrain(requestedChange, -maxChange, maxChange);
+    steeringCommandAge = 0;
+
+    return lastSteeringCommand;
+}
+
 
 void Robot::selectTask(){
     //verify if rutine is ended
@@ -301,5 +343,158 @@ void Robot::selectTask(){
             finish = true;
             changeTask(TASK::FINISHED);
         }        
+    }
+}
+
+
+void Robot::selectTaskObstacles(){
+    if(finish == true){
+        move.driveAtPWM(0);
+        return;
+    }
+
+    if(taskStatus == TASK::UNDEFINED){
+        changeTask(TASK::EVADE_UNTIL_EDGE);
+    }
+    if(recoveryTurn){
+        if(recoverySteering < 350){
+            ackermann.setSteeringAngle(recoveryAngle);
+            move.driveAtPWM(-OBSTACLE_DRIVE_PWM + 20);
+            return;
+        }
+        recoveryTurn = false;
+    }
+    if(taskStatus == TASK::EVADE_UNTIL_EDGE){
+        float imuError = imu.getError();
+
+        bool cameraDataFresh = vision.receivedAtMs != 0 &&
+            static_cast<uint32_t>(millis() - vision.receivedAtMs) <=
+                CAMERA_DATA_TIMEOUT_MS;
+        bool sentinelNotFound =
+            vision.obstacleX == CAMERA_NOT_FOUND &&
+            vision.obstacleY == CAMERA_NOT_FOUND;
+        bool validObstacle = cameraDataFresh &&
+            vision.obstacleDetected && !sentinelNotFound;
+        float distanceSinceTurnMm =
+            fabsf(move.controller.getDistanceMM());
+        bool blueLineFilterActive =
+            distanceSinceTurnMm >= 500.0f;
+        bool blueLineVisible =
+            cameraDataFresh && vision.blueLineDetected;
+
+        if(blueLineVisible != blueLineLastSample){
+            blueLineLastSample = blueLineVisible;
+            blueLineStableAge = 0;
+        }
+
+        if(blueLineVisible && blueLineArmed &&
+           blueLineFilterActive && blueLineStableAge >= 30){
+            blueLineArmed = false;
+            blueLineStableAge = 0;
+            changeTask(TASK::APPROACH_BLUE_LINE);
+            lapCount++;
+            ui.buzzSound(4);
+            return;
+        }
+        if(!blueLineVisible && !blueLineArmed &&
+           blueLineStableAge >= 100 &&
+           distanceSinceTurnMm >= BLUE_LINE_REARM_DISTANCE_MM){
+            blueLineArmed = true;
+        }
+        bool shouldEvade = validObstacle;
+
+        float steeringTarget = imuError * 1.0;
+        Serial.print(shouldEvade);
+        if(validData.left < 200){
+            steeringTarget = -30;
+        }
+        else if(validData.right < 200){
+            steeringTarget = 30;
+        }
+        else if(shouldEvade){
+            float distanceToObstacle = sqrtf((pow(vision.obstacleX - 160,2))+(pow(vision.obstacleY,2)));
+            
+            float obstacleAngle =
+                degrees(atan2f(vision.obstacleX - 160,vision.obstacleY));
+
+            float evasionDirection =
+                vision.obstacleColor == 2 ? 1.0f : -1.0f;
+                steeringTarget = tc.tangentEvasion(
+                    imuError,
+                    evasionDirection,
+                    obstacleAngle,
+                    115.0f,
+                    distanceToObstacle
+                );
+            if(distanceToObstacle < 80){
+                recoveryTurn = true;
+                recoverySteering = 0;
+                recoveryAngle = -steeringTarget;
+            }
+
+        }
+        else{
+   
+            tc.resetTangentEvasion(imuError);
+        }
+
+        ackermann.setSteeringAngle(steeringTarget);
+        move.driveAtPWM(OBSTACLE_DRIVE_PWM);
+    }
+
+    else if(taskStatus == TASK::APPROACH_BLUE_LINE){
+        ackermann.setSteeringAngle(imu.getError());
+        move.driveAtPWM(OBSTACLE_DRIVE_PWM);
+
+        if(validData.front < BLUE_LINE_FRONT_TARGET_MM){
+            initialSetPoint = wrap180(initialSetPoint - 90.0f);
+            imu.setSetPoint(initialSetPoint);
+            blueLineReverseAge = 0;
+            changeTask(TASK::REVERSE_AFTER_BLUE_LINE);
+        }
+    }
+
+    else if(taskStatus == TASK::REVERSE_AFTER_BLUE_LINE){
+        ackermann.setSteeringAngle(-imu.getError());
+        move.driveAtPWM(-OBSTACLE_DRIVE_PWM);
+
+        if(blueLineReverseAge >= BLUE_LINE_REVERSE_TIME_MS){
+            move.controller.resetTicks();
+            tc.resetTangentEvasion(imu.getError());
+            blueLineStableAge = 0;
+            blueLineLastSample = vision.blueLineDetected;
+            changeTask(TASK::FORWARD_AFTER_REVERSE);
+            move.driveAtPWM(OBSTACLE_DRIVE_PWM);
+        }
+    }
+
+    else if(taskStatus == TASK::FORWARD_AFTER_REVERSE){
+        ackermann.setSteeringAngle(imu.getError());
+        move.driveAtPWM(OBSTACLE_DRIVE_PWM);
+
+        const float forwardDistanceMm =
+            fabsf(move.controller.getDistanceMM());
+        
+        if(forwardDistanceMm >= POST_REVERSE_STRAIGHT_DISTANCE_MM && lapCount != 12){
+            tc.resetTangentEvasion(imu.getError());
+            changeTask(TASK::EVADE_UNTIL_EDGE);
+        }
+        else if(forwardDistanceMm >= 1500){
+            finish = true;
+        }
+    }
+
+    else if(taskStatus == TASK::OBSTACLES_TURN){
+        move.controller.resetTicks();
+        float error = imu.getError();
+        ackermann.setSteeringAngle(error);
+        move.driveAtPWM(90);
+        if(abs(error < 7.5)){
+            taskStatus = TASK::EVADE_UNTIL_EDGE;
+            ui.buzzSound(2);
+
+        
+        }
+
     }
 }

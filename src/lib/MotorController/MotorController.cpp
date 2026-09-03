@@ -46,6 +46,7 @@ float MotorController::getAbsoluteDistanceMM(){
 // this function controls the motor speed and direction using PWM
 void MotorController::motorDrivebyPWM(int pwm){
     pwm = constrain(pwm, -MAX_PWM, MAX_PWM);
+    lastPwm = static_cast<int16_t>(pwm);
   if(pwm > 0){
     digitalWrite(INA, HIGH);
     digitalWrite(INB, LOW);
@@ -63,6 +64,7 @@ void MotorController::motorDrivebyPWM(int pwm){
 
 // this function brake the motor by setting both INA and INB to HIGH and applying maximum PWM
 void MotorController::brake(){
+  lastPwm = 0;
   digitalWrite(INA, HIGH);
   digitalWrite(INB, HIGH);
   analogWrite(PWM, MAX_PWM);
@@ -72,4 +74,3 @@ void MotorController::brake(){
 void MotorController::resetTicks(){
   counterTicks = motor.read();
 }
-

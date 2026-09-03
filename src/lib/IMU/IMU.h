@@ -18,7 +18,7 @@ class IMU {
     bool begin(HardwareSerial& imuPort);
     bool update();
     float getError();
-    void setSetPoint(int newError);
+    void setSetPoint(float newError);
     float getYaw();
     float setPoint;
   private:

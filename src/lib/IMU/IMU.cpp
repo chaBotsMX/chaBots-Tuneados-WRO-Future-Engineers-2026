@@ -39,7 +39,7 @@ float IMU::getYaw(){
   return yaw;
 }
 
-void IMU::setSetPoint(int newPoint)
+void IMU::setSetPoint(float newPoint)
 {
   
     setPoint = wrap180(newPoint);

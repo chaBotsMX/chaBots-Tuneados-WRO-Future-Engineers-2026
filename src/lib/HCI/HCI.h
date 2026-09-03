@@ -30,7 +30,7 @@ public:
     HCI();
     void begin();
     bool buttonRead();
-    void buzzSound(int var = 1, int freq = 1000, int ms = 500);
+    void buzzSound(int var = 1, int freq = 1000, int ms = 1);
     void neoColor(int r, int g, int b);
     void showDebug(const char* currentState, const char* previousState,
                    uint16_t front, uint16_t left, uint16_t right,

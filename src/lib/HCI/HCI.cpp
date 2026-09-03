@@ -25,16 +25,6 @@ void HCI::begin(){
     Wire.begin();
     Wire.setClock(400000); // 400kHz Fast Mode
      
-    displayReady = display.begin(SSD1306_SWITCHCAPVCC, DISPLAY_ADDRESS);
-    if (displayReady) {
-        display.clearDisplay();
-        display.setTextSize(1);
-        display.setTextColor(SSD1306_WHITE);
-        display.setTextWrap(false);
-        display.display();
-    } else {
-        Serial.println("[HCI] SSD1306 not found at 0x3C");
-    }
 }
 
 bool HCI::buttonRead(){

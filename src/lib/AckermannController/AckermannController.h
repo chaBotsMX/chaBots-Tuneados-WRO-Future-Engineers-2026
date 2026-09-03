@@ -21,6 +21,7 @@
 class AckermannController {
 public:
     AckermannController();
+    float lastSteeringAngleDeg = 0.0f;
     void begin();
     void setSteeringAngle(float angle);
     void steerByRawAngle(float rawAngle);
