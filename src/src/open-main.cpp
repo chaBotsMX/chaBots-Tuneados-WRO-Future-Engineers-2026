@@ -31,5 +31,5 @@ void loop() {
   robot.updateSensors();
   robot.printData();
 
-  robot.selectTask();
+  robot.executeTaskOpen();
 }

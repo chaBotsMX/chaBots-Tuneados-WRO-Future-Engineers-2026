@@ -23,6 +23,7 @@ public:
     AckermannController();
     float lastSteeringAngleDeg = 0.0f;
     void begin();
+    // Converts an Ackermann angle in degrees to the calibrated servo offset.
     void setSteeringAngle(float angle);
     void steerByRawAngle(float rawAngle);
 

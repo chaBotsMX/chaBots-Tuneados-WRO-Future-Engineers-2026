@@ -13,6 +13,9 @@
 #include <MotorController.h>
 #include <cmath>
 
+struct MotionTaskConfig;
+struct SpeedControlConfig;
+
 struct MoveProfile {
     float VMax; // Maximum speed in cm/s
     float VFinal; // Final speed in cm/s
@@ -21,6 +24,8 @@ struct MoveProfile {
     float VInitial; // Initial speed in cm/s
 
 };
+// Manages distance profiles and motor commands. updateCM() advances the
+// profile, brakes when it finishes, and returns true only on completion.
 class Move {
 public:
     Move();
@@ -28,8 +33,11 @@ public:
     void begin();
     bool updateCM();
     void setTask(float distanceCM, float speedCMperS, float accelerationCMperS2, float decelerationCMperS2, float initialSpeedCMperS, float finalSpeedCMperS);
+    void setTask(const MotionTaskConfig& task);
     void driveAtPWM(int pwm);
+    // Proportional speed control; ki is reserved and not used yet.
     void driveAtSpeed(float speedCMperS, float kp, float ki, float actualCM);
+    void driveAtSpeed(const SpeedControlConfig& control, float actualCM);
     int calculateProfileSpeed();
     int getCurrentSpeed() const {
         return robotSpeed;

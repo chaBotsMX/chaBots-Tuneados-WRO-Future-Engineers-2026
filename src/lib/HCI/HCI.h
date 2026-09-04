@@ -30,6 +30,7 @@ public:
     HCI();
     void begin();
     bool buttonRead();
+    // var uses indices 1..5; with var <= 0, freq is played for ms.
     void buzzSound(int var = 1, int freq = 1000, int ms = 1);
     void neoColor(int r, int g, int b);
     void showDebug(const char* currentState, const char* previousState,

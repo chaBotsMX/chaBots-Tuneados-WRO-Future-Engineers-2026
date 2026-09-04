@@ -37,10 +37,11 @@ const float MM_PER_TICK = (DISTANCE_PER_REVOLUTION * 10.0f) / CPR_PER_SHAFT_REVO
 
 
 class MotorController {
-  public:
+public:
     MotorController();
     int16_t lastPwm = 0;
     void begin();
+    // Positive and negative PWM select opposite directions; the value is limited to MAX_PWM.
     void motorDrivebyPWM(int pwm);
     void resetTicks();
     void brake();

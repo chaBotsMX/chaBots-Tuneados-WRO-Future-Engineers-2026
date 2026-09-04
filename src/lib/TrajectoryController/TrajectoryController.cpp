@@ -27,27 +27,11 @@ float TrajectoryController::tangentEvasion(
     float obstacleSecurityRadius,
     float distanceToObstacle)
 {
-    // Todas estas distancias deben estar en la misma unidad. Robot usa pixeles
-    // del plano de imagen porque la camara no entrega una distancia en cm.
-    constexpr float activationDistance = 200.0f;
-    constexpr float fullEvasionDistance = 160.0f;
-
-    // Ganancias de combinación
-    constexpr float orientationGain = 2.0f;
-    constexpr float evasionGain = 4.0f;
-
-    // Ganancias PD
-    constexpr float kp = 1.0f;
-    constexpr float kd = 0.02f;
-    constexpr float derivativeFilter = 0.20f;
-
-    // Protección contra división entre cero
     if (distanceToObstacle <= 0.0f) {
         resetTangentEvasion(imuError);
         return imuError;
     }
 
-    // direction debe ser +1 o -1
     direction = direction >= 0.0f ? 1.0f : -1.0f;
 
     float tangentRatio = constrain(
@@ -56,7 +40,6 @@ float TrajectoryController::tangentEvasion(
         1.0f
     );
 
-    // Todo se trabaja en grados
     float tangentAngle = degrees(asinf(tangentRatio));
 
     float orientationAngularError = imuError;
@@ -65,19 +48,18 @@ float TrajectoryController::tangentEvasion(
         obstacleAngle + direction * tangentAngle;
 
     float evasionWeight = constrain(
-        (activationDistance - distanceToObstacle) /
-        (activationDistance - fullEvasionDistance),
+        (TAN_EVASION_ACTIVATION_DISTANCE_MM - distanceToObstacle) /
+        (TAN_EVASION_ACTIVATION_DISTANCE_MM - TAN_EVASION_FULL_EVASION_DISTANCE_MM),
         0.0f,
         1.0f
     );
 
-    // Smoothstep evita un cambio brusco al cruzar la distancia de activacion.
     evasionWeight = evasionWeight * evasionWeight *
                     (3.0f - 2.0f * evasionWeight);
 
     float totalAngularError =
-        orientationGain * orientationAngularError +
-        evasionWeight * evasionGain * evasionAngularError;
+        TAN_EVASION_ORIENTATION_GAIN * orientationAngularError +
+        evasionWeight * TAN_EVASION_EVASION_GAIN * evasionAngularError;
 
     float derivative = 0.0f;
     const float deltaTimeSeconds = static_cast<float>(deltaEvasion) / 1000.0f;
@@ -89,12 +71,12 @@ float TrajectoryController::tangentEvasion(
         derivative = errorChange / deltaTimeSeconds;
     }
 
-    filteredEvasionDerivative += derivativeFilter *
+    filteredEvasionDerivative += TAN_EVASION_DERIVATIVE_FILTER *
         (derivative - filteredEvasionDerivative);
 
     float output =
-        kp * totalAngularError +
-        kd * filteredEvasionDerivative;
+        TAN_EVASION_KP * totalAngularError +
+        TAN_EVASION_KD * filteredEvasionDerivative;
 
     lastEvasionError = totalAngularError;
     evasionInitialized = true;

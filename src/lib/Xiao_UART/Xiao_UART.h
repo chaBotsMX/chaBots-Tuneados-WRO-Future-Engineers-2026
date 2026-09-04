@@ -8,6 +8,7 @@ class Xiao_UART {
 public:
     Xiao_UART(HardwareSerial& serialXiao, uint32_t baudRate);
 
+    // Decodes the AA 55 frame with four little-endian uint16 distances.
     void readData();
 
     bool available() const {

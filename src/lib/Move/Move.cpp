@@ -8,6 +8,7 @@
 
 
 #include "Move.h"
+#include "ControlValues.h"
 
 
 Move::Move(){
@@ -37,6 +38,13 @@ void Move::setTask(float distanceCM, float speedCMperS, float accelerationCMperS
     profile.VFinal = fabsf(finalSpeedCMperS);
 }
 
+void Move::setTask(const MotionTaskConfig& task)
+{
+    setTask(task.distanceCm, task.maxSpeedCmS,
+            task.accelerationCmS2, task.decelerationCmS2,
+            task.initialSpeedCmS, task.finalSpeedCmS);
+}
+
 void Move::driveAtSpeed(float speedCMperS, float kp, float ki, float actualCM){
     int actualSpeedPWM = (actualCM - lastCMcurrent) / (speedTimer / 1000.0f); // Calculate actual speed in cm/s
     robotSpeed = actualSpeedPWM;
@@ -47,12 +55,15 @@ void Move::driveAtSpeed(float speedCMperS, float kp, float ki, float actualCM){
     lastCMcurrent = actualCM;
 }
 
+void Move::driveAtSpeed(const SpeedControlConfig& control, float actualCM){
+    driveAtSpeed(control.targetSpeedCmS, control.kp, control.ki, actualCM);
+}
+
 bool Move::updateCM(){
     CMcurrent = abs(controller.getDistanceMM()) / 10.0f; // Convert mm to cm
     Serial.print("Current CM: ");
     Serial.println(CMcurrent);
     if (CMcurrent < CMtarget) {
-        float targetDistanceTraveledPercentage = (CMcurrent / CMtarget) * 100.0f;
         int profileSpeed = this->calculateProfileSpeed();
         profileSpeed = constrain(profileSpeed, MIN_SPEED, CMSpeedTarget); //minimum positive output to avoid motor stuck in 0 at init of the task.
         this->driveAtSpeed(profileSpeed, 5, 0, CMcurrent);

@@ -35,9 +35,11 @@ public:
               int csLeft,
               int csBack);
 
+    // Configures the bus and ToF sensors; update() marks only fresh readings.
     bool begin(uint8_t freqHz = 15);
     void update();
 
+    // Returns -1 when no valid reading is available for that side.
     int16_t getDistance(Side side) const;
     bool hasFreshData(Side side) const;
     uint8_t getLastStatus(Side side) const;

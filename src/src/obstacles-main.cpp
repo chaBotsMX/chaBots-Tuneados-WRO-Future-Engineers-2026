@@ -24,12 +24,8 @@ void setup() {
       robot.ui.buzzSound(1);
     }
   }
-  // Mantener el rumbo real de arranque, no buscar un cero absoluto arbitrario.
   robot.initialSetPoint = robot.imu.getYaw();
   robot.imu.setSetPoint(robot.initialSetPoint);
-  robot.move.driveAtPWM(0);
-  robot.ackermann.setSteeringAngle(-50);
-  delay(1000);
 }
 
 void loop() {
@@ -38,13 +34,5 @@ void loop() {
   robot.updateCam();
   robot.printData();
 
-  //robot.selectTaskObstacles();
-
-  if (robot.validData.front > 50 &&
-      robot.validData.front <= MAX_VALID_DISTANCE) {
-    robot.move.driveAtPWM(-70);
-  }
-  else {
-    robot.move.driveAtPWM(0);
-  }
+  robot.executeTaskObstacles();
 }

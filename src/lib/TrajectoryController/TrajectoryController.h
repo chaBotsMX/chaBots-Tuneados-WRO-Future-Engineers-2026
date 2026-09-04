@@ -11,13 +11,16 @@
 
 #include <Arduino.h>
 #include "Utils.h"
+#include "ControlValues.h"
 
 class TrajectoryController{
 public:
     TrajectoryController();
     float lastStanleyOutputDeg = 0.0f;
     float lastTangentialOutputDeg = 0.0f;
+    // Combines wall lateral error and IMU error; returns a steering angle in degrees.
     float stanley(float wallError, float imuError, float speed, float stanleyGain, float headingGain);
+    // Generates the tangential correction for a camera-detected obstacle.
     float tangentEvasion(float imuError,
     float direction,
     float obstacleAngle,
