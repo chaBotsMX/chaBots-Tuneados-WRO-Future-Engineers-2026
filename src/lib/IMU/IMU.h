@@ -10,17 +10,25 @@
 
 #include <Adafruit_BNO08x.h>
 #include <Arduino.h>
+#include "Utils.h"
 
 class IMU {
-  public:
+public:
     IMU();
     bool begin(HardwareSerial& imuPort);
+    // Must be called every loop before reading yaw or error.
     bool update();
+    float getError();
+    // Sets the target heading; getError() returns the error relative to it.
+    void setSetPoint(float newError);
     float getYaw();
+    float setPoint;
   private:
     Adafruit_BNO08x bno08x;
     sh2_SensorValue_t sensorValue;
     float yaw;
+    float error;
+
 };
 
 #endif

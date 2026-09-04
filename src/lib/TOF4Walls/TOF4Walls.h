@@ -12,11 +12,12 @@
 #define TOF4WALLS_H
 
 #include <Arduino.h>
-#include <Wire.h>
+#include <SPI.h>
 #include <vl53l8cx.h>
-//Define i2c clock speed
-#define I2C_SPEED 1000000
+
 #define NUM_LOOKUP_ZONES 2
+
+
 
 
 class TOF4Walls {
@@ -28,15 +29,17 @@ public:
         RIGHT = 3
     };
 
-    TOF4Walls(TwoWire& wire,
-              int lpnFront,
-              int lpnBack,
-              int lpnLeft,
-              int lpnRight);
+    TOF4Walls(SPIClass& spi,
+              int csFront,
+              int csRight,
+              int csLeft,
+              int csBack);
 
-    bool begin(uint8_t freqHz = 60);
+    // Configures the bus and ToF sensors; update() marks only fresh readings.
+    bool begin(uint8_t freqHz = 15);
     void update();
 
+    // Returns -1 when no valid reading is available for that side.
     int16_t getDistance(Side side) const;
     bool hasFreshData(Side side) const;
     uint8_t getLastStatus(Side side) const;
@@ -46,8 +49,8 @@ private:
 
 
 
-    TwoWire* _wire;
-    int _lpnPins[4];
+    SPIClass* _spi;
+    int _csPins[4];
 
     VL53L8CX _front;
     VL53L8CX _back;
@@ -58,7 +61,7 @@ private:
     bool _fresh[4];
     uint8_t _lastStatus[4];
 
-    bool initOne(VL53L8CX& sensor, int lpnPin, uint8_t newAddress, uint8_t freqHz);
+    bool initOne(VL53L8CX& sensor, uint8_t freqHz);
     void updateOne(VL53L8CX& sensor, uint8_t index);
 
     int16_t computeWallDistance(const VL53L8CX_ResultsData& results, uint8_t& chosenStatus) const;

@@ -7,9 +7,13 @@
 
 #include "AckermannController.h"
 
-AckermannController::AckermannController(uint8_t servoPin)
+AckermannController::AckermannController()
 {
-    steeringServo.attach(servoPin);
+}
+
+void AckermannController::begin()
+{
+    steeringServo.attach(SERVO_PIN);
     steeringServo.write(IDLE_STEERING_ANGLE);
 }
 
@@ -62,6 +66,7 @@ void AckermannController::setSteeringAngle(float angle)
         -MAX_ACKERMANN_ANGLE,
         MAX_ACKERMANN_ANGLE
     );
+    lastSteeringAngleDeg = angle;
 
     float servoOffset =
         interpolateServoOffset(angle);
