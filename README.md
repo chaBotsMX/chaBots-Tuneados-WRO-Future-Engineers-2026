@@ -34,6 +34,8 @@
 
 <img  src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png"  width="40"  alt="YouTube">
 
+</a>
+
 
 This repository contains the documentation for **ChaBots** participation in the **WRO Future Engineers 2026** category. Our robot was designed and built by a Mexican students team, passionate about robotics and education.
 
