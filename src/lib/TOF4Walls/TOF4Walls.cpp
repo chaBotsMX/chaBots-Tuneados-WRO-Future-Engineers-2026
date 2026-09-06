@@ -10,22 +10,22 @@
 #include "TOF4Walls.h"
 #include <algorithm>
 //Selected zonea for detecntion of walls, 43 and 44 are the central zones for 8x8 resolution
-const uint8_t TOF4Walls::CENTRAL_ZONES[NUM_LOOKUP_ZONES] = {43, 44};
+const uint8_t TOF4Walls::CENTRAL_ZONES[NUM_LOOKUP_ZONES] = {35, 36};
 
-TOF4Walls::TOF4Walls(TwoWire& wire,
-                     int lpnFront,
-                     int lpnRight,
-                     int lpnLeft,
-                     int lpnBack)
-    : _wire(&wire),
-      _front(&wire, lpnFront),
-      _back(&wire, lpnBack),
-      _left(&wire, lpnLeft),
-      _right(&wire, lpnRight) {
-    _lpnPins[0] = lpnFront;
-    _lpnPins[1] = lpnRight;
-    _lpnPins[2] = lpnLeft;
-    _lpnPins[3] = lpnBack;
+TOF4Walls::TOF4Walls(SPIClass& spi,
+                     int csFront,
+                     int csRight,
+                     int csLeft,
+                     int csBack)
+    : _spi(&spi),
+      _front(&spi, csFront),
+      _back(&spi, csBack),
+      _left(&spi, csLeft),
+      _right(&spi, csRight) {
+    _csPins[FRONT] = csFront;
+    _csPins[BACK] = csBack;
+    _csPins[LEFT] = csLeft;
+    _csPins[RIGHT] = csRight;
 
     for (int i = 0; i < 4; i++) {
         _distances[i] = -1;
@@ -34,36 +34,32 @@ TOF4Walls::TOF4Walls(TwoWire& wire,
     }
 }
 
-bool TOF4Walls::begin(uint8_t freqHz) { 
-    // Turn off every sensor 
+bool TOF4Walls::begin(uint8_t freqHz) {
+    // SPI chip select is active LOW. Deselect every sensor before starting the bus.
     for (int i = 0; i < 4; i++) {
-        pinMode(_lpnPins[i], OUTPUT);
-        digitalWrite(_lpnPins[i], LOW);
+        pinMode(_csPins[i], OUTPUT);
+        digitalWrite(_csPins[i], HIGH);
     }
+
+    _spi->begin();
     delay(10);
-    _wire->begin();
-    delay(100);
-    _wire->setClock(I2C_SPEED);
-    delay(10);
-    // Directions for the TOFs once fully inited.
-    const uint8_t addrs[4] = {0x54, 0x56, 0x58, 0x5A}; // New I2C addresses for the sensors
-    //init sensor one by one
-    if (!initOne(_front, _lpnPins[0], addrs[0], freqHz));
-    if (!initOne(_right,  _lpnPins[1], addrs[1], freqHz));
-    if (!initOne(_left,  _lpnPins[2], addrs[2], freqHz));
+
+    // Configure every CS before communicating with any sensor.
+    if (_front.begin() != 0);
+    if (_right.begin() != 0);
+    if (_left.begin() != 0);
+    
+    if (!initOne(_front, freqHz));
+    if (!initOne(_right, freqHz)) ;
+    if (!initOne(_left, freqHz));
+
     return true;
 }
 
-bool TOF4Walls::initOne(VL53L8CX& sensor, int lpnPin, uint8_t newAddress, uint8_t freqHz) {
-   //Turn of the sensor by its LPN
-    digitalWrite(lpnPin, HIGH);
-    delay(10);
-    if (sensor.begin() != 0) return false;
-    delay(100);
+bool TOF4Walls::initOne(VL53L8CX& sensor, uint8_t freqHz) {
     if (sensor.init() != 0) return false;
-    if (sensor.set_i2c_address(newAddress) != 0) return false;
-    //16U is for 4x4 resolution, it can be used at 64U or 8x8, but its not necessary  
-    if (sensor.set_resolution(64U) != 0) return false;
+    // The selected center zones require 8x8 resolution (maximum 15 Hz).
+    if (sensor.set_resolution(VL53L8CX_RESOLUTION_8X8) != 0) return false;
     //continuous mode is required for the sensor to update its measurements
     //without needing a trigger
     if (sensor.set_ranging_mode(VL53L8CX_RANGING_MODE_CONTINUOUS) != 0) return false;
@@ -75,7 +71,7 @@ bool TOF4Walls::initOne(VL53L8CX& sensor, int lpnPin, uint8_t newAddress, uint8_
 
 void TOF4Walls::update() {
     updateOne(_front, FRONT);
-    updateOne(_back,  BACK);
+    updateOne(_right,  RIGHT);
     updateOne(_left,  LEFT);
 }
 

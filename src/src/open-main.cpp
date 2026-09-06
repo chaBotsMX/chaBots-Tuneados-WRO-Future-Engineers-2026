@@ -1,30 +1,35 @@
-#include <Arduino.h>
-#include "Xiao_UART.h"
-#include <HardwareSerial.h>
+#include "Robot.h"
+#include <SPI.h>
 
-Xiao_UART xiao(Serial5, 2000000);
+Robot robot;
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115200);
-  Serial5.begin(2000000); // RX, TX
-  delay(1000); // Wait for Serial to initialize
-  pinMode(13, OUTPUT); // Set pin 13 as output for the LED
+  robot.beginComms();
+  robot.ui.begin();
+  robot.ackermann.begin();
+  robot.validData.front = MAX_VALID_DISTANCE;
+  robot.validData.left = MAX_VALID_DISTANCE;
+  robot.validData.right = MAX_VALID_DISTANCE;
+
+ while (robot.ui.buttonRead() == false) {
+    robot.imu.update();
+    if(robot.updateSensors() == true){
+    robot.ui.neoColor(0,255,0);
+  }
+    if (robot.ui.buttonRead() == true) {
+  
+      robot.ui.neoColor(0,0,255);
+      robot.ui.buzzSound(1);
+    }
+  }
+  robot.imu.setSetPoint(0);
 }
 
 void loop() {
-  xiao.readData();
+  robot.imu.update();
+  robot.updateSensors();
+  robot.printData();
 
-  if (xiao.available()) {
-    SensorData data = xiao.getData();
-    Serial.print("Front: ");
-    Serial.print(data.front);
-    Serial.print(" Left: ");
-    Serial.print(data.left);
-    Serial.print(" Right: ");
-    Serial.print(data.right);
-    Serial.print(" Back: ");
-    Serial.println(data.back);  
-  }
+  robot.executeTaskOpen();
 }
-

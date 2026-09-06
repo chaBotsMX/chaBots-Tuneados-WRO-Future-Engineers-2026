@@ -2,24 +2,31 @@
 #define XIAO_UART_H
 
 #include <Arduino.h>
-
-struct SensorData {
-    uint16_t front = 0;
-    uint16_t left  = 0;
-    uint16_t right = 0;
-    uint16_t back  = 0;
-};
+#include "DataTypes.h"
 
 class Xiao_UART {
 public:
     Xiao_UART(HardwareSerial& serialXiao, uint32_t baudRate);
 
+    // Decodes the AA 55 frame with four little-endian uint16 distances.
     void readData();
 
     bool available() const {
         return newDataAvailable;
     }
 
+    int getFrontDistance() const {
+        return data.front;
+    }
+    int getLeftDistance() const {
+        return data.left;
+    }
+    int getRightDistance() const {
+        return data.right;
+    }
+    int getBackDistance() const {
+        return data.back;
+    }
     SensorData getData() {
         newDataAvailable = false;
         return data;

@@ -54,7 +54,8 @@ This repository contains the documentation for **ChaBots** participation in the 
 11. 🛠️ [Construction, Serviceability and Debugging](#construction-guide)
 12. 💰 [Cost Report](#cost-report)
 13. 📚 [Photos, Videos and Resources](#resources)
-14. ©️ [License](#license)
+14. 📋 [Engineering Development Log](#engineering-log)
+15. ©️ [License](#license)
 ---
 
 
@@ -1043,13 +1044,197 @@ This section describes the hardware that is installed in the final robot and how
 
 The XIAO can also transmit telemetry during development. Wireless functions are disabled during official runs; the competition system does not depend on an external computer or network.
 
-### Power Architecture
+### Power Architecture and Consumption
 
-- **Main battery:** 3S (11.1 V) LiPo, approximately 1000 mAh.
-- **Motor rail:** the battery supplies the VNH7070AS motor-driver stage.
-- **Regulated rail:** a Pololu S8V9F5 step-up/step-down regulator supplies 5 V at up to 1.5 A to the controllers, encoders, RGB LED, and steering servo.
-- **Sensor logic:** the Teensy 4.0 and XIAO ESP32-C6 provide the 3.3 V logic interfaces required by the sensors.
-- **Noise control:** local decoupling, short return paths, ground pours, and stitching vias reduce interference from the motor and servo.
+The robot uses a 3S LiPo battery with a nominal voltage of 11.1 V. The electrical system is divided into three main power rails:
+
+1. **Battery rail — 11.1 V nominal:** motor driver and drive motor.
+2. **Regulated 5 V rail:** Teensy, XIAO ESP32-C6, OpenMV camera, RGB LED, encoders, and steering servo.
+3. **Regulated 3.3 V rail:** four VL53L8CX ToF sensor modules.
+
+The BNO085 IMU is powered from the Teensy's 3.3 V output and is therefore not connected to the external 3.3 V regulator.
+
+Power is expressed in watts:
+
+$$
+P = V \times I
+$$
+
+Energy stored in the battery is expressed in watt-hours:
+
+$$
+E = V \times Ah
+$$
+
+For the 11.1 V, 1000 mAh battery:
+
+$$
+E = 11.1\ V \times 1\ Ah = 11.1\ Wh
+$$
+
+#### Component Power Budget
+
+| Load | Supply | Normal or design current | Peak current used for design | Peak power | Notes |
+|---|---:|---:|---:|---:|---|
+| Teensy 4.0 | 5 V | 100 mA | 100 mA | 0.50 W | Approximately 100 mA at 600 MHz |
+| XIAO ESP32-C6 | 5 V | — | 250 mA | 1.25 W | Conservative design value; Wi-Fi is disabled during normal operation |
+| WS2812B RGB LED | 5 V | 25 mA | 25 mA | 0.125 W | Based on the configured brightness; full-white current can be higher |
+| OpenMV H7 | 5 V | 160 mA | 170 mA | 0.85 W | Conservative input-side budget; final value must be measured at VIN |
+| HS-85MG steering servo | 5 V | 240 mA | 1.2 A | 6.00 W | 1.2 A is a conservative transient design value, not a manufacturer-published stall current |
+| Four VL53L8CX modules | 3.3 V | 400 mA total | 600 mA total | 1.98 W | Approximately 100 mA typical and 150 mA peak per module |
+| BNO085 IMU | Teensy 3.3 V output | 12.5 mA | 12.5 mA | 0.041 W | Supplied through the Teensy; excluded from the external 3.3 V rail total |
+| Pololu 25D HP motor | Battery rail | 300 mA no-load | 1.5 A design operating current | 16.65 W at 11.1 V | Motor stall current is approximately 5 A |
+
+The motor's 1.5 A value is the expected high-load operating current used for the main power estimate. It must not be confused with the approximately 5 A stall current, which is treated separately as a short-duration transient.
+
+#### 5 V Rail
+
+The normal estimated current, including the servo's published running current, is:
+
+$$
+I_{5V,normal} = 0.100 + 0.250 + 0.025 + 0.170 + 0.240 = 0.785\ A
+$$
+
+$$
+P_{5V,normal} = 5\ V \times 0.785\ A = 3.925\ W
+$$
+
+Using the 1.2 A servo transient as the design condition:
+
+$$
+I_{5V,peak} = 0.100 + 0.250 + 0.025 + 0.170 + 1.200 = 1.745\ A
+$$
+
+$$
+P_{5V,peak} = 5\ V \times 1.745\ A = 8.725\ W
+$$
+
+A small additional margin is required for the BNO085 because it is powered through the Teensy's onboard 3.3 V regulator. Therefore, the practical 5 V design budget is approximately **1.75 A and 8.8 W**.
+
+The 5 V rail uses a **Pololu D24V50F5** regulator, rated for approximately 5 A. At a 1.75 A output load, the regulator operates at approximately 35% of its nominal current capacity.
+
+Assuming 90% efficiency:
+
+$$
+P_{in,5V} = \frac{8.8\ W}{0.90} \approx 9.78\ W
+$$
+
+$$
+P_{loss,5V} = 9.78 - 8.8 \approx 0.98\ W
+$$
+
+#### 3.3 V ToF Rail
+
+Each VL53L8CX module uses approximately 100 mA during typical continuous ranging and may reach approximately 150 mA.
+
+For four sensors:
+
+$$
+I_{3.3V,typical} = 4 \times 0.100 = 0.400\ A
+$$
+
+$$
+P_{3.3V,typical} = 3.3\ V \times 0.400\ A = 1.32\ W
+$$
+
+For the peak design condition:
+
+$$
+I_{3.3V,peak} = 4 \times 0.150 = 0.600\ A
+$$
+
+$$
+P_{3.3V,peak} = 3.3\ V \times 0.600\ A = 1.98\ W
+$$
+
+The ToF rail uses a **Pololu D24V10F3**, rated for approximately 1 A. A 600 mA peak load uses 60% of its nominal current capacity.
+
+Assuming 87% efficiency:
+
+$$
+P_{in,3.3V} = \frac{1.98\ W}{0.87} \approx 2.28\ W
+$$
+
+$$
+P_{loss,3.3V} = 2.28 - 1.98 \approx 0.30\ W
+$$
+
+Because the VL53L8CX carrier boards are powered close to their minimum accepted input voltage, the voltage must also be measured directly at the sensor connectors under maximum load to verify that wiring losses do not reduce it excessively.
+
+#### Motor Rail
+
+The motor is connected to the 3S battery through the VNH7070AS motor driver.
+
+At the selected 1.5 A design operating current and the battery's nominal voltage:
+
+$$
+P_{motor} = 11.1\ V \times 1.5\ A = 16.65\ W
+$$
+
+At stall:
+
+$$
+P_{motor,stall} = 11.1\ V \times 5\ A = 55.5\ W
+$$
+
+Stall is not a normal operating condition, but it must be considered when selecting the battery, motor driver, wiring, connectors, switch, and protection system.
+
+#### Estimated Total Battery Load
+
+Assuming both regulators are connected directly to the battery:
+
+| Section | Output power | Estimated battery input power | Battery current at 11.1 V |
+|---|---:|---:|---:|
+| 5 V regulated rail | 8.8 W | 9.78 W | 0.88 A |
+| 3.3 V regulated rail | 1.98 W | 2.28 W | 0.21 A |
+| Motor at design load | 16.65 W | 16.65 W | 1.50 A |
+| **Estimated total** | — | **28.71 W** | **2.59 A** |
+
+This estimate does not yet include the motor driver's conduction losses, regulator quiescent current, wiring losses, or battery voltage sag. The real battery input will therefore be slightly higher.
+
+With an ideal 11.1 Wh battery:
+
+$$
+Runtime_{ideal} = \frac{11.1\ Wh}{28.71\ W} = 0.387\ h \approx 23.2\ minutes
+$$
+
+This value is only a theoretical continuous-load estimate. Real runtime will be lower because of acceleration peaks, steering activity, battery discharge characteristics, voltage sag, and the required safety reserve.
+
+During a motor stall, the complete system could temporarily demand approximately:
+
+$$
+I_{stall,total} \approx 5.0 + 0.88 + 0.21 = 6.09\ A
+$$
+
+Therefore, the 1000 mAh battery must support more than 6.1 A without excessive voltage drop. This corresponds to an absolute theoretical minimum of approximately 6.1C, although a substantially higher battery discharge rating should be used to provide adequate margin.
+
+#### Power Integrity and Noise Control
+
+Motor and servo current transients can introduce voltage drops and electrical noise into the logic and sensor rails. The PCB therefore uses:
+
+- Local decoupling capacitors near each controller and sensor connector.
+- Bulk capacitance close to the servo and regulator outputs.
+- Short and wide high-current traces.
+- Separate high-current return paths for the motor and servo.
+- Ground pours connected with stitching vias.
+- A common ground reference between controllers and sensors.
+- Physical separation between motor-current paths and sensitive sensor signals.
+- Voltage and current measurements under acceleration, hard steering, and motor-stall test conditions.
+
+#### Measurements to Be Added
+
+The calculated budget will be validated experimentally after the final PCB and wiring assembly are completed.
+
+| Test condition | Battery voltage | Battery current | 5 V rail | 3.3 V rail | Result |
+|---|---:|---:|---:|---:|---|
+| Electronics idle | TBD | TBD | TBD | TBD | TBD |
+| Sensors and camera active | TBD | TBD | TBD | TBD | TBD |
+| Motor running straight | TBD | TBD | TBD | TBD | TBD |
+| Maximum steering movement | TBD | TBD | TBD | TBD | TBD |
+| Acceleration from rest | TBD | TBD | TBD | TBD | TBD |
+| Brief controlled motor stall | TBD | TBD | TBD | TBD | TBD |
+
+Component values were taken from the manufacturers' documentation for the [Pololu D24V50F5](https://www.pololu.com/product/2851), [Pololu D24V10F3](https://www.pololu.com/product/2830), [Pololu VL53L8CX carrier](https://www.pololu.com/product/3419), [Teensy 4.0](https://www.pjrc.com/store/teensy40.html), [OpenMV H7](https://openmv.io/products/openmv-cam-h7), [HiTEC HS-85MG](https://www.hiteccs.com/actuators/product-details/HS-85MG), and [Pololu 25D HP motor](https://www.pololu.com/product/3203/resources). Conservative or assumed values are identified in the table and will be replaced by measurements from the assembled robot.
 
 ### Main PCB
 
@@ -1084,7 +1269,7 @@ The board uses an XT30 battery connector and includes the main controller interf
 <td>
 <h4>Power Delivery</h4>
 <img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Power%20Delivery.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;" alt="Power-delivery schematic">
-<p style="font-size: 0.9em; margin-top: 0.5em;">XT30 battery connector, 6 A slide switch, Pololu S8V9F5 regulator, filtered servo output, and motor output.</p>
+<p style="font-size: 0.9em; margin-top: 0.5em;">XT30 battery connector, 6 A slide switch, Pololu D24V50F5 5 V regulator, Pololu D24V10F3 3.3 V regulator, filtered servo output, and motor output.</p>
 </td>
 </tr>
 <tr>
@@ -2101,32 +2286,19 @@ This architecture keeps the control loop on the Teensy while moving the ToF sens
 
 
 
-### 8.5 Change Log
+### 8.5 Software Traceability
 
+The architecture described in this chapter must always be associated with an exact firmware revision. A branch or pull request identifies the development path, while the commit SHA identifies the code that was actually tested.
 
+| Reference | Purpose | Individual implementation commits | Lifecycle state |
+|---|---|---|---|
+| [`main` at `133d321`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/133d3210541c07f98ae7bf30ae751ac6490dffaa) | Merged repository baseline | The SHA identifies the exact baseline instead of only naming a moving branch | Current merged baseline as of 2026-08-25 |
+| [PR #12 — PlatformIO and movement refactor](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/12) | Reorganized the main firmware for PlatformIO and rewrote the movement service | [`1d786a9`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/1d786a94cfddc96b4476ffe290e282885ecb8e80), [`330c558`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/330c55822a5181ea8c3ef128261535b1a6133385), [`0c278ce`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/0c278cea854b42a36a5c09a6b2f693104cd5bc96) | Merged on 2026-07-30 |
+| [PR #13 — XIAO refactor](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/13) | Migrated the XIAO ESP32-C6 firmware and its file structure to PlatformIO | [`b893e0f`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/b893e0ff19096e232ec58bb3f365b31bdd885727), [`4ca50d9`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/4ca50d993c8a773e5033a34089d547d8c908da3d), [`6974ea8`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/6974ea8afe4f93a9cdee0465558deee55fb538b7), [`0b1dec5`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/0b1dec5cb89f76c449b6574f2ae3c0858b145010) | Merged on 2026-08-08 |
+| [PR #14 — Ackermann controller](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/14) | Added the Ackermann steering controller and its servo interface | [`f499757`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/f4997579a6dee7d41c2b7bf161329bbe73b685ff), [`03b1e26`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/03b1e2668fa3435006bb8ed13d5827066fed71e4), [`9325693`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/9325693eb55d1c00de34552d704608c70179c207) | Merged on 2026-08-08 |
+| [PR #17 — Both-directions state machine](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/17) | Integrates the open-round controller, adds clockwise and counterclockwise operation, replaces magic numbers, and refactors the state machine | [`b926e0c`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/b926e0c680cd5143adbd8ff1af8b53b07b4126ad), [`471e974`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/471e974461f40f3d8e8abfa80d775be42ed7acc7), [`df1c767`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/df1c7676ed0fd0539639bb11e3306517c951a1b8), [`470c56d`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/470c56da9e501138d06623add52a45273175141a), [`f1a7c67`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/f1a7c6739b6c75b84bcdac681b2c219244c7ee5d) | Open and under review as of 2026-08-25; the current PR head is `f1a7c67` |
 
-#### 25/04/2026
-
-
-
-- The base code is working.
-
-- Fixed several inconsistencies in variable names.
-
-- Added new helper functions and libraries.
-
-- Added UART communication between the XIAO ESP32-C6 and the Teensy 4.0.
-
-- Added ToF filtering to discard readings above `3000 mm`.
-
-- Added encoder and IMU-based distance estimation.
-
-- Added automatic direction selection.
-
-- Added support for switching between right-wall and left-wall following.
-
-- Added final forward movement before stopping.
-
+Every recorded run in [Section 10](#testing-validation) and [Section 14](#engineering-log) should include the Teensy firmware SHA, XIAO firmware SHA, robot hardware revision, and test conditions. A later commit must not be cited as if it were the firmware used in an earlier test; when the exact tested SHA is unknown, the log states that limitation explicitly. The complete chronological history of changes, failures, and milestones is maintained in [Section 14](#engineering-log).
 
 
 ## 9. Obstacle Management <a name="obstacle-management"></a>
@@ -2370,7 +2542,175 @@ The final current-robot BOM still needs the verified purchase prices and quantit
 
 
 
-## 14. License <a name="license"></a>
+## 14. Engineering Development Log <a name="engineering-log"></a>
+
+This append-only log records the changes, failures, test campaigns, and milestones that materially affected the robot. Pull requests explain the review and integration context; individual commit links identify the actual implementation snapshots. A linked commit proves that a change exists in the repository, but an entry is considered validated only when its acceptance criteria and test evidence are also recorded.
+
+The log uses the following lifecycle states:
+
+- **Proposed:** not yet implemented.
+- **Implemented:** completed but not sufficiently tested.
+- **Under test:** validation is in progress.
+- **Partially validated:** positive results exist, but some acceptance criteria or evidence are still pending.
+- **Validated:** the documented acceptance criteria were met and supporting evidence is available.
+- **Mitigated:** the immediate problem was controlled, although its root cause was not necessarily eliminated.
+- **Superseded:** retained as historical evidence but replaced by a later implementation.
+- **Rejected:** tested and intentionally removed from the final design.
+
+### 14.1 Change and Decision Log
+
+| ID | Date | Type | Subsystem | Trigger or objective | Change and rationale | Validation and evidence | Status | Reference |
+|---|---|---|---|---|---|---|---|---|
+| SW-CHG-001 | 2026-04-19 to 2026-04-24 | Integration | Navigation software | Establish the first working open-challenge baseline using the new controllers and sensors | Added ToF and IMU libraries, mobility control, wall-following and obstacle logic, and the final open-round behavior | Commit messages record a working open round, a 27-point obstacle run, and a final open-round version. The exact field configuration, pass rate, tested SHA, and videos were not recorded in the repository | Partially validated | [PR #1](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/1) · Commits: [`506a37f`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/506a37f2a7d91929770abf3f4b149cae3918c7da), [`6c31456`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/6c31456f21b601c59601c89e3a987a6bbf05e605), [`d9b9761`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/d9b9761aa714a986ac60046fd2caf81027378e50), [`483cc72`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/483cc72551d91a09103c76594456e5db4a95e300), [`b651ce8`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/b651ce82dd3977f927ac45330f383d0186af576e) |
+| SW-CHG-002 | 2026-04-27 | Refactor | XIAO communication | Improve readability and integrity of the first XIAO sensor protocol | Removed development prints, introduced named packet fields, added a checksum in that iteration, and standardized variables and transmission behavior | The commits document the implementation, but no packet-loss or corruption-rejection measurements were attached. This protocol was later replaced by the architecture described in [Section 8.3](#83-sensor-interface-contracts) | Superseded | [PR #9](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/9) · Commits: [`3968a3d`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/3968a3d25a3b87e7bd01a28bfa0a4070fde25832), [`3bf5e64`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/3bf5e64039da1cf24005a1804a8f04c709dee6ad), [`98d0c39`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/98d0c395f8c8e799beb0e7c70032592d6f59b0b4) |
+| SW-CHG-003 | 2026-04-30 | Refactor | Motor and encoder software | Separate drivetrain feedback from the main control program | Created a reusable library for motor commands and encoder feedback; the PR remained open during testing and was merged on 2026-07-27 | Implementation is traceable, but encoder scale, speed error, and repeatability measurements remain pending in [Section 10](#testing-validation) | Implemented | [PR #10](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/10) · Commit: [`78430b1`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/78430b12eee17507e528cbf7b5a25d3852e30d5c) |
+| SW-CHG-004 | 2026-07-27 to 2026-07-30 | Architecture refactor | Main firmware and movement service | Make builds reproducible and allow movement operations without blocking the complete control loop | Reorganized the source tree for PlatformIO, standardized ToF constants, rewrote the movement library as a service, and added distance and trapezoidal-profile operations | The code was merged. Build reproducibility, commanded-distance error, and timing behavior still need numerical test records | Implemented | [PR #12](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/12) · Commits: [`1d786a9`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/1d786a94cfddc96b4476ffe290e282885ecb8e80), [`330c558`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/330c55822a5181ea8c3ef128261535b1a6133385), [`0c278ce`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/0c278cea854b42a36a5c09a6b2f693104cd5bc96) |
+| SW-CHG-005 | 2026-08-06 to 2026-08-08 | Refactor | XIAO ToF firmware | Make the current sensor-node firmware reproducible outside the Arduino IDE | Adapted the XIAO ESP32-C6 project to PlatformIO, revised constants and UART behavior, and added a diagnostic LED | PlatformIO compatibility was implemented. Hardware initialization success rate, long-duration runtime, and UART packet-loss measurements remain pending | Implemented | [PR #13](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/13) · Commits: [`b893e0f`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/b893e0ff19096e232ec58bb3f365b31bdd885727), [`4ca50d9`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/4ca50d993c8a773e5033a34089d547d8c908da3d), [`6974ea8`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/6974ea8afe4f93a9cdee0465558deee55fb538b7), [`0b1dec5`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/0b1dec5cb89f76c449b6574f2ae3c0858b145010) |
+| SW-CHG-006 | 2026-08-06 to 2026-08-08 | Control change | Steering | Replace direct servo commands with steering references related to robot geometry | Added Teensy-side sensor reception, an Ackermann controller based on the bicycle model, and servo steering methods | Initial testing produced a visually smooth trajectory without obvious overshoot; numerical steering-angle, repeatability, load-transfer, and turning-radius measurements remain pending in [Section 10](#testing-validation) | Partially validated | [PR #14](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/14) · Commits: [`f499757`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/f4997579a6dee7d41c2b7bf161329bbe73b685ff), [`03b1e26`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/03b1e2668fa3435006bb8ed13d5827066fed71e4), [`9325693`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/9325693eb55d1c00de34552d704608c70179c207) |
+| DOC-CHG-001 | 2026-08-08 to 2026-08-14 | Documentation | Engineering manual | Improve visual consistency and add mechanical resources | Added tables and model assets, then removed obsolete files before merge | The assets were merged; final PDF rendering, image checks, and link verification remain part of the publication checklist | Implemented | [PR #15](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/15) · Commits: [`26ee22b`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/26ee22bab7e4bd10ca34acfb850384037e2b4d33), [`8e82f49`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/8e82f49d7dfa0f58213a001ac36857f2bdf119b2), [`63be6f3`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/63be6f3628cb8e3cfed3e057bb202fe6bd54da67), [`a74f7b9`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/a74f7b960ff1576a8e3d811b5f8325aeccb5c077), [`94dad8b`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/94dad8b8e4767c4214adfdd9d38287bf9eac633e) |
+| SW-CHG-007 | 2026-08-10 to 2026-08-12 | Integration | One-direction open challenge | Integrate the new interfaces and steering controller into a working open-round program before adding direction randomization | Moved tested features into reusable robot libraries and produced the first repository snapshot explicitly identified as a working open round | The team reports ten complete test runs with one fixed driving direction. The exact tested SHA, what was randomized, the run matrix, and videos still need to be attached | Partially validated | [PR #17](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/17) · Commits: [`97c42b4`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/97c42b40aa1ce59e0f8190cf081f57944c11aec8), [`283d184`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/283d1842bf43e0e269d042d519bab25c740882f8), [`b926e0c`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/b926e0c680cd5143adbd8ff1af8b53b07b4126ad) |
+| SW-CHG-008 | 2026-08-16 to 2026-08-25 | State-machine refactor | Both-direction open challenge | Support clockwise and counterclockwise runs with clearer navigation states | Added direction-dependent lap logic, corrected open-round behavior, replaced magic numbers with named constants, and refactored the state machine | The team reports seven successful randomized runs. The direction distribution, exact tested SHA, conditions, and video or log evidence still need to be attached. The current PR head requires a new regression test after the 2026-08-25 refactor | Under test | [PR #17](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/17) · Commits: [`471e974`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/471e974461f40f3d8e8abfa80d775be42ed7acc7), [`df1c767`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/df1c7676ed0fd0539639bb11e3306517c951a1b8), [`470c56d`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/470c56da9e501138d06623add52a45273175141a), [`f1a7c67`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/f1a7c6739b6c75b84bcdac681b2c219244c7ee5d) |
+| DOC-CHG-002 | 2026-08-20 | Documentation refactor | R&D and engineering manual | Remove deprecated explanations and make the design rationale easier to follow | Reorganized the research content and separated current design decisions from discarded alternatives | The change was merged; content accuracy and final rendered-document checks remain ongoing | Implemented | [PR #16](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/16) · Commit: [`a495369`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/a49536964abf14d203617ec95505d18fb2de2036) |
+| ELEC-CHG-001 | 2026-08-21 | Corrective redesign and documentation | Power distribution | Reduce regulator stress after ERR-CIR-001 and document realistic electrical margins | Documented separate 5 V and 3.3 V regulated rails, selected higher-capacity regulators, calculated normal and peak loads, and defined a staged bring-up and measurement matrix | The analytical budget places the selected regulators below their nominal current ratings. Measurements on the replacement PCB remain pending, so this is not yet physical validation | Implemented | Commit: [`eacd126`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/eacd126a6178fe61ea8e7c3b680ce239ebd5cc66) · [Section 7](#electronics) |
+
+### 14.2 Failure and Incident Log
+
+#### ERR-SEN-001 — VL53L8CX communication was unreliable on the Teensy
+
+- **First observed:** 2026-05-12; mitigated through an architecture change merged on 2026-08-08.
+- **Subsystem:** Distance sensing and I2C communication.
+- **Conditions:** VL53L8CX sensors connected directly to the Teensy 4.0. The team tested software changes, different wiring configurations, and a direct connection with a single sensor.
+- **Observed symptom:** Reliable initialization and stable communication could not be achieved on the Teensy 4.0, including with a single directly connected sensor.
+- **Impact:** Direct Teensy acquisition could not be trusted as the final wall-distance interface.
+- **Root cause:** Not confirmed.
+- **Corrective action:** Moved ToF acquisition to the XIAO ESP32-C6 and transmitted validated distances to the Teensy over UART.
+- **Retest result:** The distributed architecture was adopted, but a numerical initialization success rate, long-duration packet-loss test, and direct evidence link remain pending.
+- **Status:** Mitigated.
+- **Evidence and references:** [PR #13](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/13); commits [`b893e0f`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/b893e0ff19096e232ec58bb3f365b31bdd885727), [`4ca50d9`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/4ca50d993c8a773e5033a34089d547d8c908da3d), and [`0b1dec5`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/0b1dec5cb89f76c449b6574f2ae3c0858b145010); [Section 7](#electronics); and [Section 8](#software-architecture).
+- **Next action:** Record repeated cold-start tests and a continuous UART run, including initialization success rate, packet-loss rate, and any recovery events.
+
+
+#### ERR-VIS-001 — Required OpenMV N6 camera controls were unavailable in the tested workflow
+
+- **First observed:** 2026-05-14.
+- **Subsystem:** Vision and obstacle detection.
+- **Conditions:** OpenMV N6 firmware and workflow evaluated for manual exposure and white-balance control.
+- **Observed symptom:** The required manual controls were not available in the tested configuration.
+- **Impact:** The team could not guarantee repeatable image behavior under changing venue lighting.
+- **Root cause:** Limitation of the firmware or workflow tested by the team; no universal hardware limitation is claimed.
+- **Corrective action:** Retained the OpenMV H7, whose manual image controls and toolchain were already understood.
+- **Retest result:** H7 image control was predictable in team prototypes; the final lighting test matrix and detection rates remain pending.
+- **Status:** Rejected.
+- **Evidence and references:** [Section 4.3](#sensor-changes) and [Section 10](#testing-validation). No hardware-test commit, image set, or lab log is currently linked; these should be attached before changing the result to fully evidenced.
+- **Next action:** Attach the N6/H7 comparison images and run the same detection test under several recorded illumination levels.
+
+#### ERR-CIR-001 — 5 V regulator thermal failure
+
+- **First observed:** 2026-08-16.
+- **Subsystem:** Main PCB and power distribution.
+- **Conditions:** The robot had just completed a reported 30-point test round and was stopped in its final state.
+- **Observed symptom:** The regulator that stepped the 3S battery voltage down to the previous 5 V rail overheated and ignited; the complete robot then lost power.
+- **Impact:** The prototype became unavailable for software and field testing until replacement PCBs could be assembled.
+- **Root cause:** Not confirmed. The working hypothesis is cumulative thermal and electrical stress from operating the previous regulator close to its practical limit from May to August. A destructive inspection, measured load history, and temperature record are not available, so this must not be presented as a proven cause.
+- **Corrective action:** Redesigned the power distribution so the 5 V electronics and the 3.3 V ToF load use separate, higher-capacity regulators. The current design uses a D24V50F5 for the 5 V rail and a D24V10F3 for the ToF rail, with explicit peak-load margins and a staged bring-up procedure.
+- **Retest result:** Analytical current and loss estimates are complete. No assembled-board thermal, transient, or full-run measurements are yet recorded.
+- **Status:** Implemented; hardware validation pending.
+- **Evidence and references:** Commit [`eacd126`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/eacd126a6178fe61ea8e7c3b680ce239ebd5cc66), [Section 7](#electronics), and the pending power measurements in the same section. Add photographs of the failed board and the replacement-board test record when available.
+- **Next action:** Perform the staged bring-up, measure both rails during maximum steering and acceleration, log regulator temperature through a complete run, and inspect the failed board if it can be handled safely.
+
+#### ERR-MEC-001 — Front-wheel slip reduced steering authority
+
+- **First observed:** 2026-05-12.
+- **Subsystem:** Steering geometry, chassis balance, and tire contact.
+- **Conditions:** The robot was driven through track corners at test speed.
+- **Observed symptom:** The steering linkage commanded a turn, but the front tires scrubbed or slid and the robot continued on a wider path than requested.
+- **Impact:** The robot required large, open corner trajectories and could contact the outside wall when a tighter turn was commanded.
+- **Root cause:** Two contributors were identified: the center of mass was biased toward the rear axle, leaving insufficient normal load on the front tires, and the earlier steering geometry was not calculated from the actual robot dimensions. Their individual contributions have not yet been quantified.
+- **Corrective action:** Recalculated the Ackermann geometry for the real wheelbase and track width, added a geometry-based steering controller, and moved or added mass toward the front axle.
+- **Retest result:** The revised system produced a visually smoother trajectory without obvious overshoot. Front/rear axle load, wheel-angle accuracy, minimum turning radius, and slip at competition speed remain pending in [Section 10](#testing-validation).
+- **Status:** Partially validated.
+- **Evidence and references:** [PR #14](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/14); commits [`03b1e26`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/03b1e2668fa3435006bb8ed13d5827066fed71e4) and [`9325693`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/9325693eb55d1c00de34552d704608c70179c207); [Section 4.2](#integrating-steering); and [Section 10](#testing-validation).
+- **Next action:** Record front and rear axle loads, commanded and measured wheel angles, minimum turning radius in both directions, and slip behavior at low and competition speeds.
+
+#### ERR-SW-001 — Open-round logic accumulated mixed responsibilities and magic values
+
+- **First observed:** 2026-08-10 during integration of the new controllers.
+- **Subsystem:** Main navigation software.
+- **Conditions:** One-direction open-round features were combined while the team was iterating rapidly on field behavior.
+- **Observed symptom:** Robot behavior, device interfaces, timing values, and state transitions were concentrated in the main navigation path, making regressions difficult to isolate and parameters difficult to audit.
+- **Impact:** Adding the second driving direction and correcting failures required repeated edits across the same logic.
+- **Root cause:** Test code was promoted into the integrated program before responsibilities and tuning constants had been separated.
+- **Corrective action:** Extracted robot interfaces into libraries, replaced a set of magic values with named constants, and refactored the navigation logic into clearer states.
+- **Retest result:** The team reports successful runs after the intermediate changes, but the latest state-machine commit from 2026-08-25 still requires a recorded regression matrix in both directions.
+- **Status:** Under test.
+- **Evidence and references:** [PR #17](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/17); commits [`283d184`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/283d1842bf43e0e269d042d519bab25c740882f8), [`470c56d`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/470c56da9e501138d06623add52a45273175141a), and [`f1a7c67`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/f1a7c6739b6c75b84bcdac681b2c219244c7ee5d).
+- **Next action:** Execute the complete open-round regression matrix on `f1a7c67`, record both directions separately, and attach serial logs and videos before merging PR #17.
+
+### 14.3 Important Milestones and Test Campaigns
+
+#### MIL-NAV-001 — Full-score open challenge in one fixed direction
+
+- **Test date reported by the team:** 2026-08-08.
+- **First traceable working firmware snapshot:** 2026-08-12, commit [`b926e0c`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/b926e0c680cd5143adbd8ff1af8b53b07b4126ad). The repository does not identify the exact SHA used on 2026-08-08, so the later snapshot must not be presented as that test's confirmed firmware.
+- **Related changes:** SW-CHG-006 and SW-CHG-007.
+- **Objective:** Complete an open-challenge round at full score in a specified direction while validating the new Ackermann steering and wall-following/path-control methods.
+- **Acceptance criteria:** Traverse all 26 scoring sections, complete three laps, stop in the required finish area, and achieve the reported total of 30 points without human intervention.
+- **Current test record:** The team reports ten complete test runs while the driving direction remained fixed. The present record does not identify what was randomized between runs.
+- **Evidence still required:** Exact tested firmware SHA, selected direction, field-randomization record, hardware revision, battery voltage, timing, intervention count, and direct video or log links for the ten runs.
+- **Current conclusion:** The result is a strong functional milestone, but the date-to-firmware mismatch and missing run evidence prevent a **Validated** status.
+- **Status:** Partially validated.
+- **References:** [PR #14](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/14), [PR #17](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/17), and commits [`03b1e26`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/03b1e2668fa3435006bb8ed13d5827066fed71e4), [`9325693`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/9325693eb55d1c00de34552d704608c70179c207), and [`b926e0c`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/b926e0c680cd5143adbd8ff1af8b53b07b4126ad).
+
+#### MIL-NAV-002 — Open challenge completed in both directions
+
+- **Date:** 2026-08-16.
+- **Related change:** SW-CHG-008.
+- **Objective:** Verify autonomous direction selection and complete open-challenge navigation in clockwise and counterclockwise field configurations.
+- **Acceptance criteria:** Select direction without manual intervention; complete three laps and twelve corners; avoid collision; and stop in the required finish area without human intervention.
+- **Current test record:** The team reports seven successful randomized runs. Commit [`471e974`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/471e974461f40f3d8e8abfa80d775be42ed7acc7), dated 2026-08-16, is the first repository snapshot that explicitly adds both-direction lap logic.
+- **Evidence still required:** Exact tested SHA, number of clockwise and counterclockwise runs, randomized variable, field configuration, hardware revision, battery-voltage range, run duration, intervention count, and direct video or log links.
+- **Regression note:** The current PR head, [`f1a7c67`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/f1a7c6739b6c75b84bcdac681b2c219244c7ee5d), refactors the state machine after the reported runs and must be validated independently before merge.
+- **Current conclusion:** Preliminary success in both directions. Change the status to **Validated** only after the complete test matrix and evidence are attached to the exact tested commit.
+- **Status:** Under test.
+- **References:** [PR #17](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/pull/17) and commits [`471e974`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/471e974461f40f3d8e8abfa80d775be42ed7acc7), [`df1c767`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/df1c7676ed0fd0539639bb11e3306517c951a1b8), [`470c56d`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/470c56da9e501138d06623add52a45273175141a), and [`f1a7c67`](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/commit/f1a7c6739b6c75b84bcdac681b2c219244c7ee5d).
+
+### 14.4 Evidence Required for Every Formal Test Run
+
+To prevent a result from becoming disconnected from the version that produced it, every future run record should contain:
+
+1. a unique test ID and ISO date;
+2. the exact Teensy and XIAO commit SHAs;
+3. the robot PCB, chassis, steering, and sensor-mount revisions;
+4. the field configuration and selected driving direction;
+5. battery voltage before and after the run;
+6. lighting and other relevant environmental conditions;
+7. total score, elapsed time, collisions, resets, and human interventions;
+8. pass or fail against predefined acceptance criteria; and
+9. direct links to the video, serial log, photographs, and measurement sheet.
+
+A suggested compact identifier is `TST-YYYYMMDD-NN`, for example `TST-20260825-01`. If a later commit is created after a test, record it as a follow-up change; do not replace the tested SHA with the newer one.
+
+<!--
+Template for future detailed entries. Keep dates in YYYY-MM-DD format.
+
+#### <ID> — <short descriptive title>
+
+- **Date:** <YYYY-MM-DD>
+- **Type:** <Change / Decision / Failure / Test / Milestone>
+- **Subsystem:** <Mechanical / Electrical / Sensors / Software / Documentation>
+- **Observed problem or objective:** <What triggered the work?>
+- **Conditions:** <Field configuration, battery, lighting, firmware, and robot revision>
+- **Action or decision:** <What changed and why?>
+- **Validation method:** <Measurement or acceptance criteria>
+- **Result:** <Numerical result, pass rate, failure, or pending evidence>
+- **Status:** <Proposed / Implemented / Under test / Partially validated / Validated / Mitigated / Superseded / Rejected>
+- **Evidence:** <PR, exact individual commit SHA, CAD revision, photo, graph, log, or video>
+- **Next action:** <Remaining work>
+-->
+
+---
+
+## 15. License <a name="license"></a>
 
 
 
