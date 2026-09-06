@@ -1,5 +1,6 @@
 
 
+
 # ChaBots - WRO Future Engineers 2026
 
 
@@ -19,7 +20,7 @@
 
 </a>
 
-<!-- Instagram (con degradado real) -->
+<!-- Instagram -->
 
 <a  href="https://www.instagram.com/chabotsmx/"  target="_blank">
 
@@ -886,28 +887,28 @@ The electrical design was consolidated into one **8 × 8 cm**, two-layer PCB. A 
 
 The table is the single overview of the completed robot. The R&D chapter explains **why** each option was selected; the subsystem chapters explain **what** was built; the software chapter explains **how** it operates; and the validation chapter records **what has been measured**.
 
-
+<img  src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/v-photos/v-rotation.gif?raw=true">
 
 <table  style="width: 100%;">
 <tbody>
 <tr>
 <td>
 <center><h4>Front</h4></center>
-<img  src=""  style="width: 100%;">
+<img  src="https://raw.githubusercontent.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/refs/heads/main/v-photos/v-front.HEIC"  style="width: 100%;">
 </td>
 <td>
 <center><h4>Back</h4></center>
-<img  src=""  style="width: 100%;">
+<img  src="https://raw.githubusercontent.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/refs/heads/main/v-photos/v-back.HEIC"  style="width: 100%;">
 </td>
 </tr>
 <tr>
 <td>
-<center><h4>Left</h4></center>
-<img  src=""  style="width: 100%;">
+<center><h4>Right</h4></center>
+<img  src="https://raw.githubusercontent.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/refs/heads/main/v-photos/v-right.HEIC"  style="width: 100%;">
 </td>
 <td>
-<center><h4>Right</h4></center>
-<img  src=""  style="width: 100%;">
+<center><h4>Left</h4></center>
+<img  src="https://raw.githubusercontent.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/refs/heads/main/v-photos/v-left.HEIC"  style="width: 100%;">
 </td>
 </tr>
 </tbody>
@@ -2728,7 +2729,7 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 
 
 
->  *Document maintained by Chabots | Last updated: Aug 2026*
+>  *Document maintained by Chabots | Last updated: Sep 2026*
 
 
 
