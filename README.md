@@ -336,13 +336,13 @@ The following table compares some motors we considered. We usually prefer motors
 
 
 
-| Model          | Speed (RPM) | Torque (kg/cm) | Current (A) | Weight (g) |voltage| Price ($) |
+| Model          | Speed (RPM) | Torque (kg/cm) | Current (A) | Weight (g) |Voltage| Price ($) |
 |----------------|-------------|----------------|-------------|------------|---|-----------|
 | Maxon DCX19    | 600         | 6.5            | 2.0         | 80         |12V| 500       |
 | Pololu 25D HP 20.4:1   | 480 | 4.8            | 6.0         | 107        | 6V|37.95      |
 | Pololu 25D LP 9.7:1     | 630 | 1.3           | 2.0         | 100        | 6V|33.00      |
-| generic (pololu 25D copy)    | 620         | 0.22           | not specified        | 120         |12V|10.00      |
-| lego EV3 (EV3 Medium Motor, 45503) | 240-260 (no-load) |~2.2 kg·cm stalled| no-load ~0.10 A, stall ~0.62 A | 42 g | ~9V (powered by EV3) | low ($) |
+| Generic (Pololu 25D copy)    | 620         | 0.22           | not specified        | 120         |12V|10.00      |
+| Lego EV3 (EV3 Medium Motor, 45503) | 240-260 (no-load) |~2.2 kg·cm stalled| no-load ~0.10 A, stall ~0.62 A | 42 g | ~9V (powered by EV3) | low ($) |
 | Pololu 25D HP 20.4:1 (with encoder)| 500 | 7 kg·cm stalled| no-load 0.30 A, stall 5.00 A | 120 g | 12V  | 56.95 |
 
 
@@ -453,7 +453,7 @@ The Maxon motors are linear, smooth, and easy to predict. However, with encoders
 
 
 
-Why use a servo?
+Why to use a servo?
 
 
 
@@ -474,7 +474,7 @@ Here are some servo options:
 |------------|---------------|-------------|-----|------|---|-----------|
 | HS 85MG    | 3             | 1.2         | Small|    21    |Excellent| 40.00      |
 | MG996      |  13           | 1.2         | Really big|    66    | Bad|10.00      |
-| MG95       |  1.8          | 1.0         | small|    9   | Bad|2.00      |
+| MG95       |  1.8          | 1.0         | Small|    9   | Bad|2.00      |
 
 
 This is only a comparison between the servo we chose and some generic options. There are many good servo brands, but comparing all of them would make this section too long.
@@ -896,21 +896,21 @@ The table is the single overview of the completed robot. The R&D chapter explain
 <tr>
 <td>
 <center><h4>Front</h4></center>
-<img  src="https://raw.githubusercontent.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/refs/heads/main/v-photos/v-front.HEIC"  style="width: 100%;">
+<img  src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/v-photos/v-front.png?raw=true"  style="width: 100%;">
 </td>
 <td>
 <center><h4>Back</h4></center>
-<img  src="https://raw.githubusercontent.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/refs/heads/main/v-photos/v-back.HEIC"  style="width: 100%;">
+<img  src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/v-photos/v-back.png?raw=true"  style="width: 100%;">
 </td>
 </tr>
 <tr>
 <td>
 <center><h4>Right</h4></center>
-<img  src="https://raw.githubusercontent.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/refs/heads/main/v-photos/v-right.HEIC"  style="width: 100%;">
+<img  src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/v-photos/v-right.png?raw=true"  style="width: 100%;">
 </td>
 <td>
 <center><h4>Left</h4></center>
-<img  src="https://raw.githubusercontent.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/refs/heads/main/v-photos/v-left.HEIC"  style="width: 100%;">
+<img  src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/v-photos/v-left.png?raw=true"  style="width: 100%;">
 </td>
 </tr>
 </tbody>
@@ -2519,19 +2519,21 @@ This subtotal intentionally reports only the rows shown. It does not claim to eq
 |---|---:|---:|---:|
 | Teensy 4.0 | 1 | $800 | $800 |
 | HiTEC HS-85MG micro servo | 1 | $2,000 | $2,000 |
+| OpenMV N6 | 1 | $4,000 |$4,000 |
 | Pololu 25D 500 RPM gearmotor with encoder | 1 | $1,100 | $1,100 |
 | Polymaker PLA prototype filament | 1 kg | $900 | $900 |
 | Polymaker carbon-fiber filament | 0.5 kg | $450 | $450 |
 | SMD components and miscellaneous parts | — | $1,500 | $1,500 |
 | PCB manufacturing | 1 | $800 | $800 |
-| **Partial subtotal of listed rows** | | | **$7,550** |
+| Chassis Steel Plate | 1 | $300 | $300
+| Steering System Steel Plate | 1 | $200 | $200
+| Polyurethane Resin A40 | 1L | $800 | $800 |
+| **Partial subtotal of listed rows** | | | **$12,850** |
 
 The final current-robot BOM still needs the verified purchase prices and quantities for the VL53L8CX boards, OpenMV H7, BNO085, XIAO ESP32-C6, battery, regulator, VNH7070AS, connectors, tires, fasteners, and the amount of printed material actually consumed.
 ## 13. Photos, Videos and Resources <a name="resources"></a>
 
 
-
-- [Chabots Main Site](https://www.chabots.mx)
 
 - [WRO 2026 Future Engineers General Rules](https://wro-association.org/wp-content/uploads/WRO-2026-Future-Engineers-Self-Driving-Cars-General-Rules.pdf)
 
