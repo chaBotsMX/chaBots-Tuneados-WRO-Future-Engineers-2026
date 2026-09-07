@@ -42,6 +42,8 @@
 
 #define  TEENSY_SOFT_REBOOT 0x05FA0004
 
+static uint8_t bnoRxBuffer[1024];
+
 // High-level facade: each loop updates sensors and runs exactly one state
 // machine (open round or obstacles).
 class Robot {
@@ -58,6 +60,8 @@ public:
 
     Robot();
     void updateCam();
+    void updateCamOpen();
+
     void beginComms();
 
     // Updates ToF data and returns true when at least one side has a new reading.
@@ -80,6 +84,8 @@ public:
     // Runs one non-blocking step of evasion, blue-line, and parking logic.
     void executeTaskObstacles();
 
+    // Selects the course direction from current side readings, falling back to
+    // the most recent useful readings when both sides are out of range.
     void decideDir();
 
 
@@ -131,14 +137,16 @@ public:
     void setForwardAfterReverse();
 
 private:
-    uint16_t SENSOR_DATA_TIMEOUT_MS = 127;
+    static constexpr uint8_t GREEN_OBSTACLE = 2;
+
+    uint16_t SENSOR_DATA_TIMEOUT_MS = 50;
     uint16_t CAMERA_DATA_TIMEOUT_MS = 500;
     uint16_t INVALID_DISTANCE = MAX_VALID_DISTANCE + 1;
     uint8_t CAMERA_NOT_FOUND = 250;
-    static constexpr int OBSTACLE_DRIVE_PWM = -80;
+    static constexpr int OBSTACLE_DRIVE_PWM = -100;
     static constexpr uint16_t BLUE_LINE_FRONT_TARGET_MM = 50;
     static constexpr uint32_t BLUE_LINE_REVERSE_TIME_MS = 3000;
-    static constexpr float POST_REVERSE_STRAIGHT_DISTANCE_MM = 300.0f;
+    static constexpr float POST_REVERSE_STRAIGHT_DISTANCE_MM = 250.0f;
 
 
     // States shared by both runs; each firmware uses a subset.
@@ -172,8 +180,11 @@ private:
     elapsedMillis recoverySteering;
     elapsedMillis blueLineStableAge;
     elapsedMillis blueLineReverseAge;
+    int lineId = 0;
     bool recoveryTurn = false;
     float recoveryAngle = 0;
+    uint16_t lastUsefulLeftDistance = MAX_VALID_DISTANCE + 1;
+    uint16_t lastUsefulRightDistance = MAX_VALID_DISTANCE + 1;
     bool blueLineArmed = true;
     bool blueLineLastSample = false;
 

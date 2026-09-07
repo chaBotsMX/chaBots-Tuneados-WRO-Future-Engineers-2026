@@ -14,7 +14,7 @@
 Move::Move(){
 }
 
-void Move::begin(){
+void Move:: begin(){
     controller.begin();
 }
 

@@ -29,10 +29,12 @@ struct OpenMVData {
     uint16_t wallY = 250;
     uint16_t blueLineBottomY = 250;
     uint8_t obstacleColor = 0;
+    uint8_t lineId = 0;
     
     bool obstacleDetected = false;
     bool wallDetected = false;
     bool blueLineDetected = false;
+    bool lineDetected = false;
 
     // Raw received flags; the booleans are their decoded form.
     uint8_t flags = 0;

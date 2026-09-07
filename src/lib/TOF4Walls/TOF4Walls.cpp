@@ -8,9 +8,40 @@
 
 
 #include "TOF4Walls.h"
+#include "ControlValues.h"
 #include <algorithm>
+
+#ifdef DEBUG_PRINT_TOFS
+namespace {
+void printTofMatrix(const VL53L8CX_ResultsData& results, uint8_t side) {
+    if (side != DEBUG_PRINT_TOF_SIDE) {
+        return;
+    }
+
+    const char* sideName = side == TOF4Walls::FRONT ? "FRONT" :
+                           side == TOF4Walls::LEFT  ? "LEFT"  : "RIGHT";
+
+    Serial.print("[TOF ");
+    Serial.print(sideName);
+    Serial.println("] distance_mm");
+
+    for (uint8_t row = 0; row < 8; row++) {
+        for (uint8_t column = 0; column < 8; column++) {
+            uint8_t zone = row * 8 + column;
+            Serial.print(results.distance_mm[zone]);
+            if (column < 7) {
+                Serial.print('\t');
+            }
+        }
+        Serial.println();
+    }
+    Serial.println();
+}
+}
+#endif
+
 //Selected zonea for detecntion of walls, 43 and 44 are the central zones for 8x8 resolution
-const uint8_t TOF4Walls::CENTRAL_ZONES[NUM_LOOKUP_ZONES] = {35, 36};
+const uint8_t TOF4Walls::CENTRAL_ZONES[NUM_LOOKUP_ZONES] = {27, 35};
 
 TOF4Walls::TOF4Walls(SPIClass& spi,
                      int csFront,
@@ -45,13 +76,13 @@ bool TOF4Walls::begin(uint8_t freqHz) {
     delay(10);
 
     // Configure every CS before communicating with any sensor.
-    if (_front.begin() != 0);
-    if (_right.begin() != 0);
-    if (_left.begin() != 0);
-    
-    if (!initOne(_front, freqHz));
-    if (!initOne(_right, freqHz)) ;
-    if (!initOne(_left, freqHz));
+    if (_front.begin() != 0) return false;
+    if (_right.begin() != 0) return false;
+    if (_left.begin() != 0) return false;
+
+    if (!initOne(_front, freqHz)) return false;
+    if (!initOne(_right, freqHz)) return false;
+    if (!initOne(_left, freqHz)) return false;
 
     return true;
 }
@@ -93,6 +124,10 @@ void TOF4Walls::updateOne(VL53L8CX& sensor, uint8_t index) {
     if (sensor.get_ranging_data(&results) != 0) {
         return;
     }
+
+#ifdef DEBUG_PRINT_TOFS
+    printTofMatrix(results, index);
+#endif
 
     uint8_t chosenStatus = 255;
     //gets the information and store in the corresponding index, 

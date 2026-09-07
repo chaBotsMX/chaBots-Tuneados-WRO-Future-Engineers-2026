@@ -1,18 +1,19 @@
 import csi
+import pyb
 import time
 from machine import UART
 
 
 OBSTACLE_THRESHOLDS = [
-    (20, 60, 30, 98, -25, 70),
-    (15, 85, -128, -20, 2, 127)   # Verde
+    (8, 29, 14, 127, -128, 127),
+    (0, 49, -128, -12, 2, 127)  # Verde
 ]
 
 PARKING_WALL_THRESHOLDS = [
-    (10, 56, 14, 86, -128, 9)     # Magenta
+    (0, 34, 13, 127, -128, 4)    # Magenta
 ]
 BLUE_LINE_THRESHOLD = [
-    (0, 70, -30, 30, -128, -10),
+    (0, 79, -128, 20, -128, -7),
 ]
 
 UART_ID = 3
@@ -25,16 +26,14 @@ PACKET_SIZE = 14
 NOT_FOUND_X = 250
 NOT_FOUND_Y = 250
 
-DETECTION_ROI = (20, 0, 280, 120)
+DETECTION_ROI = (20, 30, 280, 80)
+BLUE_DETECTION_ROI = (0, 12, 320, 38)
 
-BLUE_DETECTION_ROI = (0, 0, 320, 50)
-
-
-MIN_OBSTACLE_PIXELS = 200
-MIN_OBSTACLE_AREA = 100
+MIN_OBSTACLE_PIXELS = 40
+MIN_OBSTACLE_AREA = 40
 MIN_WALL_PIXELS = 100
 MIN_WALL_AREA = 100
-MIN_LINE_PIXELS = 80
+MIN_LINE_PIXELS = 120
 MIN_LINE_AREA = 40
 
 MIN_OBSTACLE_ASPECT_RATIO = 0.5
@@ -101,14 +100,15 @@ def configure_camera():
     camera.reset()
     camera.pixformat(csi.RGB565)
     camera.framesize(csi.QVGA)
-
-    camera.auto_blc(False, regs=[129, 132, 134, 133, 128, 132, 120, 128])
-    camera.auto_gain(False, gain_db=8.0)
-    camera.auto_exposure(False, exposure_us=6000)
-    camera.auto_whitebal(False, rgb_gain_db=(3.0, 3.0, 6.0))
-    camera.brightness(1)
-    camera.saturation(3)
-    camera.contrast(1)
+    camera.framerate(120)
+    camera.auto_gain(False, gain_db=15.0)
+    camera.snapshot()
+    camera.auto_exposure(False, exposure_us=9000)
+    camera.snapshot()
+    camera.auto_whitebal(False, rgb_gain_db=(25, 22, 27))
+    camera.brightness(-1)
+    camera.saturation(0)
+    camera.contrast(-1)
 
     if camera.cid() in (csi.OV7725, csi.OV5640):
         camera.ioctl(csi.IOCTL_SET_NIGHT_MODE, False)
@@ -117,11 +117,28 @@ def configure_camera():
     return camera
 
 
+def set_ready_leds(enabled):
+    led_r = pyb.LED(1)
+    led_g = pyb.LED(2)
+    led_b = pyb.LED(3)
+
+    if enabled:
+        led_r.on()
+        led_g.on()
+        led_b.on()
+    else:
+        led_r.off()
+        led_g.off()
+        led_b.off()
+
+
 def main():
+    set_ready_leds(False)
     camera = configure_camera()
     uart = UART(UART_ID, baudrate=UART_BAUDRATE)
     packet = bytearray(PACKET_SIZE)
     clock = time.clock()
+    ready_leds_on = False
 
     while True:
         clock.tick()
@@ -165,7 +182,7 @@ def main():
         if line is not None:
             blue_line_bottom_y = min(
                 239,
-                int(line.cy - line.h/2),
+                int(line.y + line.h - 1),
             )
             img.draw_rectangle(
                 line.rect,
@@ -174,7 +191,7 @@ def main():
             )
             img.draw_cross(
                 (line.cx, blue_line_bottom_y),
-                color=(0, 255, 0),
+                color=(0, 0, 255),
                 thickness=2,
             )
 
@@ -235,6 +252,7 @@ def main():
             color=(255, 0, 0),
             thickness=2,
         )
+
         update_packet(
             packet,
             obstacle_position,
@@ -244,6 +262,12 @@ def main():
         )
         uart.write(packet)
 
+        if not ready_leds_on:
+            set_ready_leds(True)
+            ready_leds_on = True
+            print("Camara lista: LED blanco encendido")
+
+        print(clock.fps())
         if PRINT_DIAGNOSTICS:
             print(
                 "obstacle:",
@@ -257,4 +281,7 @@ def main():
             )
 
 
-main()
+try:
+    main()
+finally:
+    set_ready_leds(False)

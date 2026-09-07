@@ -29,7 +29,6 @@ bool cameraReceiver::update(HardwareSerial &serialPort, OpenMVData &data) {
                 packet[1] = incomingByte;
                 packetIndex = 2;
             } else if (incomingByte == OPENMV_START_HIGH) {
-                // Permite resincronizar con una secuencia AA AA 55.
                 packet[0] = incomingByte;
                 packetIndex = 1;
             } else {
@@ -52,7 +51,6 @@ bool cameraReceiver::update(HardwareSerial &serialPort, OpenMVData &data) {
         }
 
         if (calculatedChecksum != packet[13]) {
-            // Paquete corrupto: vuelve a buscar AA 55 sin actualizar data.
             continue;
         }
 
@@ -69,6 +67,53 @@ bool cameraReceiver::update(HardwareSerial &serialPort, OpenMVData &data) {
         data.obstacleColor = (data.flags >> 2) & 0x03;
         data.receivedAtMs = millis();
 
+        receivedValidPacket = true;
+    }
+
+    return receivedValidPacket;
+}
+
+bool cameraReceiver::updateOpen(HardwareSerial &serialPort, OpenMVData &data){
+    static uint8_t packet[OPENMV_OPEN_PACKET_SIZE];
+    static size_t packetIndex = 0;
+    bool receivedValidPacket = false;
+
+    while (serialPort.available() > 0) {
+        const uint8_t incomingByte =
+            static_cast<uint8_t>(serialPort.read());
+
+        if (packetIndex == 0) {
+            if (incomingByte == OPENMV_START_HIGH) {
+                packet[0] = incomingByte;
+                packetIndex = 1;
+            }
+            continue;
+        }
+
+        if (packetIndex == 1) {
+            if (incomingByte == OPENMV_START_LOW) {
+                packet[1] = incomingByte;
+                packetIndex = 2;
+            } else if (incomingByte == OPENMV_START_HIGH) {
+                packet[0] = incomingByte;
+                packetIndex = 1;
+            } else {
+                packetIndex = 0;
+            }
+            continue;
+        }
+
+        packet[2] = incomingByte;
+        packetIndex = 0;
+
+        if (packet[2] != 1 && packet[2] != 2 && packet[2] != 3) {
+            continue;
+        }
+
+        data.lineId = packet[2];
+        data.lineDetected = true;
+        data.blueLineDetected = data.lineId == 1;
+        data.receivedAtMs = millis();
         receivedValidPacket = true;
     }
 
