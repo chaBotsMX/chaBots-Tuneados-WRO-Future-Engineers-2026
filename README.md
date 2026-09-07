@@ -56,7 +56,7 @@ This repository contains the documentation for **ChaBots** participation in the 
 10. 🧪 [Testing, Validation and Results](#testing-validation)
 11. 🛠️ [Construction, Serviceability and Debugging](#construction-guide)
 12. 💰 [Cost Report](#cost-report)
-13. 📚 [Photos, Videos and Resources](#resources)
+13. 📚 [Videos and Resources](#resources)
 14. 📋 [Engineering Development Log](#engineering-log)
 15. ©️ [License](#license)
 ---
@@ -889,6 +889,8 @@ The electrical design was consolidated into one **8 × 8 cm**, two-layer PCB. A 
 
 The table is the single overview of the completed robot. The R&D chapter explains **why** each option was selected; the subsystem chapters explain **what** was built; the software chapter explains **how** it operates; and the validation chapter records **what has been measured**.
 
+### 5.1. Robot Gallery 
+
 <img  src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/v-photos/v-rotation.gif?raw=true">
 
 <table  style="width: 100%;">
@@ -1224,18 +1226,16 @@ Motor and servo current transients can introduce voltage drops and electrical no
 - Physical separation between motor-current paths and sensitive sensor signals.
 - Voltage and current measurements under acceleration, hard steering, and motor-stall test conditions.
 
-#### Measurements to Be Added
+#### Table of Expected Theoretical Values
 
-The calculated budget will be validated experimentally after the final PCB and wiring assembly are completed.
-
-| Test condition | Battery voltage | Battery current | 5 V rail | 3.3 V rail | Result |
-|---|---:|---:|---:|---:|---|
-| Electronics idle | TBD | TBD | TBD | TBD | TBD |
-| Sensors and camera active | TBD | TBD | TBD | TBD | TBD |
-| Motor running straight | TBD | TBD | TBD | TBD | TBD |
-| Maximum steering movement | TBD | TBD | TBD | TBD | TBD |
-| Acceleration from rest | TBD | TBD | TBD | TBD | TBD |
-| Brief controlled motor stall | TBD | TBD | TBD | TBD | TBD |
+| Test condition | Battery voltage | Battery current | 5 V rail | 3.3 V rail | Result | 
+|---|---:|---:|---:|---:|---| 
+| Electronics idle | ~11.1 V | ~0.15 A | ~0.20 A | ~0.02 A | Expected PASS: Stable voltages, no components hot to the touch | 
+| Sensors and camera active | ~11.1 V | ~0.40 A | ~0.43 A | ~0.40 A | Expected PASS: Continuous sensor operation without MCU resets | 
+| Motor running straight | ~11.0 V | ~1.20 A | ~0.43 A | ~0.40 A | Expected PASS: VNH7070AS maintains nominal temperature | 
+| Maximum steering movement | ~11.0 V | ~1.50 A (peak) | ~1.75 A (peak) | ~0.40 A | Expected PASS: No voltage drops on the 5 V rail | 
+| Acceleration from rest | ~10.8 V | ~3.50 A (peak) | ~0.43 A | ~0.40 A | Expected PASS: 3.3 V rail remains clean from inductive noise | 
+| Brief controlled motor stall | ~10.5 V | ~6.10 A (peak) | ~0.88 A (peak) | ~0.40 A | Expected PASS: System stays on, PCB traces survive the 6 A load |
 
 Component values were taken from the manufacturers' documentation for the [Pololu D24V50F5](https://www.pololu.com/product/2851), [Pololu D24V10F3](https://www.pololu.com/product/2830), [Pololu VL53L8CX carrier](https://www.pololu.com/product/3419), [Teensy 4.0](https://www.pjrc.com/store/teensy40.html), [OpenMV H7](https://openmv.io/products/openmv-cam-h7), [HiTEC HS-85MG](https://www.hiteccs.com/actuators/product-details/HS-85MG), and [Pololu 25D HP motor](https://www.pololu.com/product/3203/resources). Conservative or assumed values are identified in the table and will be replaced by measurements from the assembled robot.
 
@@ -2531,7 +2531,8 @@ This subtotal intentionally reports only the rows shown. It does not claim to eq
 | **Partial subtotal of listed rows** | | | **$12,850** |
 
 The final current-robot BOM still needs the verified purchase prices and quantities for the VL53L8CX boards, OpenMV H7, BNO085, XIAO ESP32-C6, battery, regulator, VNH7070AS, connectors, tires, fasteners, and the amount of printed material actually consumed.
-## 13. Photos, Videos and Resources <a name="resources"></a>
+
+## 13. Videos and Resources <a name="resources"></a>
 
 
 
@@ -2683,15 +2684,15 @@ The log uses the following lifecycle states:
 
 To prevent a result from becoming disconnected from the version that produced it, every future run record should contain:
 
-1. a unique test ID and ISO date;
-2. the exact Teensy and XIAO commit SHAs;
-3. the robot PCB, chassis, steering, and sensor-mount revisions;
-4. the field configuration and selected driving direction;
-5. battery voltage before and after the run;
-6. lighting and other relevant environmental conditions;
-7. total score, elapsed time, collisions, resets, and human interventions;
-8. pass or fail against predefined acceptance criteria; and
-9. direct links to the video, serial log, photographs, and measurement sheet.
+1. A unique test ID and ISO date;
+2. The exact Teensy and XIAO commit SHAs;
+3. The robot PCB, chassis, steering, and sensor-mount revisions;
+4. The field configuration and selected driving direction;
+5. Battery voltage before and after the run;
+6. Lighting and other relevant environmental conditions;
+7. Total score, elapsed time, collisions, resets, and human interventions;
+8. Pass or fail against predefined acceptance criteria; and
+9. Direct links to the video, serial log, photographs, and measurement sheet.
 
 A suggested compact identifier is `TST-YYYYMMDD-NN`, for example `TST-20260825-01`. If a later commit is created after a test, record it as a follow-up change; do not replace the tested SHA with the newer one.
 
@@ -2734,20 +2735,3 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 
 
 >  *Document maintained by Chabots | Last updated: Sep 2026*
-
-
-
-<!--stackedit_data:
-
-eyJoaXN0b3J5IjpbMTcyMzM3ODYxNCwtMzc2NTM2MDM5LDM1ND
-
-c4NDQyMCwxMjQ4Mzg0MTM1LC0yODM3NTcxNywtMTMyNzEwNTIy
-
-MywxMjg3Nzk2NjQsLTQ4MTYzMzM4MF19
-
--->
-
-
-
-
-> Written with [StackEdit](https://stackedit.io/).
