@@ -5,7 +5,7 @@ from machine import UART
 
 
 OBSTACLE_THRESHOLDS = [
-    (30, 82, 12, 127, -128, 39),
+    (8, 29, 14, 127, -128, 127),
     (0, 49, -128, -12, 2, 127)  # Verde
 ]
 
@@ -26,11 +26,11 @@ PACKET_SIZE = 14
 NOT_FOUND_X = 250
 NOT_FOUND_Y = 250
 
-DETECTION_ROI = (20, 30, 280, 90)
+DETECTION_ROI = (20, 30, 280, 80)
 BLUE_DETECTION_ROI = (0, 12, 320, 38)
 
-MIN_OBSTACLE_PIXELS = 60
-MIN_OBSTACLE_AREA = 60
+MIN_OBSTACLE_PIXELS = 40
+MIN_OBSTACLE_AREA = 40
 MIN_WALL_PIXELS = 100
 MIN_WALL_AREA = 100
 MIN_LINE_PIXELS = 120
@@ -101,11 +101,11 @@ def configure_camera():
     camera.pixformat(csi.RGB565)
     camera.framesize(csi.QVGA)
     camera.framerate(120)
-    camera.auto_gain(False, gain_db=13.0)
+    camera.auto_gain(False, gain_db=15.0)
     camera.snapshot()
     camera.auto_exposure(False, exposure_us=9000)
     camera.snapshot()
-    camera.auto_whitebal(False, rgb_gain_db=(26, 22, 27))
+    camera.auto_whitebal(False, rgb_gain_db=(25, 22, 27))
     camera.brightness(-1)
     camera.saturation(0)
     camera.contrast(-1)
@@ -149,7 +149,7 @@ def main():
             roi=DETECTION_ROI,
             pixels_threshold=MIN_OBSTACLE_PIXELS,
             area_threshold=MIN_OBSTACLE_AREA,
-            merge=True,
+            merge=False,
         )
 
         wall_blobs = img.find_blobs(

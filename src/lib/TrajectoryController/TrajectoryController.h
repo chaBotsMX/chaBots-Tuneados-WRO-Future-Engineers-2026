@@ -24,8 +24,8 @@ public:
     float tangentEvasion(float imuError,
     float direction,
     float obstacleAngle,
-    float obstacleSecurityRadius,
-    float distanceToObstacle);
+    float obstacleSecurityRadiusPx,
+    float distanceToObstaclePx);
     void resetTangentEvasion(float currentError = 0.0f);
 private:
     float lastEvasionError = 0.0f;

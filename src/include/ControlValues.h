@@ -73,11 +73,10 @@ constexpr SpeedControlConfig OPEN_CRUISE_SPEED_CONTROL = {
 #define OPEN_TURN_STEERING_GAIN 2.0f
 
 
-// Tangencial Evasion Controls
-// These distances use OpenMV pixels; the _MM suffix is retained for compatibility.
-#define TAN_EVASION_SECURITY_RADIUS_MM 120 // Minimum distance to the obstacle to start evasion
-#define TAN_EVASION_ACTIVATION_DISTANCE_MM 170 // Distance to activate tangent evasion maneuver
-#define TAN_EVASION_FULL_EVASION_DISTANCE_MM 150 // Distance to activate full tangent evasion maneuver
+// Tangential evasion controls. All distance values in this block are OpenMV pixels.
+#define TAN_EVASION_SECURITY_RADIUS_PX 120
+#define TAN_EVASION_ACTIVATION_DISTANCE_PX 170
+#define TAN_EVASION_FULL_EVASION_DISTANCE_PX 150
 #define TAN_EVASION_ORIENTATION_GAIN 1.5f // Gain for orientation error in tangent evasion
 #define TAN_EVASION_EVASION_GAIN 2.0f // Gain for evasion
 #define TAN_EVASION_KP 2.0f // Proportional gain for PD
@@ -89,7 +88,7 @@ constexpr SpeedControlConfig OPEN_CRUISE_SPEED_CONTROL = {
 #define OBSTACLES_RECOVERY_TIME_MS 350 // Recovery time when to close to obstacle
 #define SIDE_WALLS_ACTIVATION_DISTANCE_MM 100 // Distance to activate tangent evasion maneuver
 #define NO_OBSTACLE_IMU_GAIN 3.0f
-#define OBSTACLE_CLOSE_RECOVERY_DISTANCE_MM 80 // Distance to activate recovery maneuver when too close to obstacle
+#define OBSTACLE_CLOSE_RECOVERY_DISTANCE_PX 80 // Image-space distance that starts recovery
 
 // SIDE WALLS CONTROLS
 #define SIDE_WALLS_ACTIVATION_DISTANCE_MM 100 // Distance to activate tangent evasion

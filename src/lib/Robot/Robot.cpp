@@ -535,10 +535,10 @@ void Robot::executeEvadeUntilEdge(){
                     imuError,
                     evasionDirection,
                     obstacleAngle,
-                    TAN_EVASION_SECURITY_RADIUS_MM,
+                    TAN_EVASION_SECURITY_RADIUS_PX,
                     distanceToObstacle
             );
-            if(distanceToObstacle < OBSTACLE_CLOSE_RECOVERY_DISTANCE_MM){
+            if(distanceToObstacle < OBSTACLE_CLOSE_RECOVERY_DISTANCE_PX){
                 setRecoveryTurn(steeringTarget);
             }
 

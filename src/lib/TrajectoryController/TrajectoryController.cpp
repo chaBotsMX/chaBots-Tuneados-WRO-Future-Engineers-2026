@@ -24,10 +24,10 @@ float TrajectoryController::tangentEvasion(
     float imuError,
     float direction,
     float obstacleAngle,
-    float obstacleSecurityRadius,
-    float distanceToObstacle)
+    float obstacleSecurityRadiusPx,
+    float distanceToObstaclePx)
 {
-    if (distanceToObstacle <= 0.0f) {
+    if (distanceToObstaclePx <= 0.0f) {
         resetTangentEvasion(imuError);
         return imuError;
     }
@@ -35,7 +35,7 @@ float TrajectoryController::tangentEvasion(
     direction = direction >= 0.0f ? 1.0f : -1.0f;
 
     float tangentRatio = constrain(
-        obstacleSecurityRadius / distanceToObstacle,
+        obstacleSecurityRadiusPx / distanceToObstaclePx,
         0.0f,
         1.0f
     );
@@ -48,8 +48,8 @@ float TrajectoryController::tangentEvasion(
         obstacleAngle + direction * tangentAngle;
 
     float evasionWeight = constrain(
-        (TAN_EVASION_ACTIVATION_DISTANCE_MM - distanceToObstacle) /
-        (TAN_EVASION_ACTIVATION_DISTANCE_MM - TAN_EVASION_FULL_EVASION_DISTANCE_MM),
+        (TAN_EVASION_ACTIVATION_DISTANCE_PX - distanceToObstaclePx) /
+        (TAN_EVASION_ACTIVATION_DISTANCE_PX - TAN_EVASION_FULL_EVASION_DISTANCE_PX),
         0.0f,
         1.0f
     );
