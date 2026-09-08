@@ -1,4 +1,5 @@
 import csi
+import math
 import pyb
 import time
 from machine import UART
@@ -12,9 +13,18 @@ OBSTACLE_THRESHOLDS = [
 PARKING_WALL_THRESHOLDS = [
     (0, 34, 13, 127, -128, 4)    # Magenta
 ]
+
 BLUE_LINE_THRESHOLD = [
     (0, 79, -128, 20, -128, -7),
 ]
+
+BLACK_WALL_THRESHOLD = [(0, 25, -12, 12, -12, 12)]  # Calibrar negro
+BLACK_WALL_ROI = (0, 0, 320, 50)  # Pared cercana; proyectar hacia los pilares
+WALL_FLOOR_REFERENCE = (160, 4)  # Suelo cercano, camara invertida
+MIN_WALL_LINE_LENGTH = 25
+MIN_WALL_LINE_HEIGHT = 18
+WALL_SAMPLE_DISTANCE = 4
+WALL_BOUNDARY_MARGIN = 6  # Pixeles; tolerancia, no distancia al robot
 
 UART_ID = 3
 UART_BAUDRATE = 115200
@@ -51,6 +61,86 @@ def is_vertical_obstacle(blob):
 
 def is_horizontal_parking_wall(blob):
     return blob.w > blob.h * MIN_WALL_ASPECT_RATIO
+
+
+def find_wall_boundaries(img, color_blobs):
+    # Blanco en la mascara = pared negra. No modificar la imagen original.
+    mask = img.copy(roi=BLACK_WALL_ROI)
+    mask.binary(BLACK_WALL_THRESHOLD)
+    mask.to_grayscale()
+    reference_x, reference_y = WALL_FLOOR_REFERENCE
+    boundaries = [None, None]
+    scores = [0, 0]
+
+    def is_wall(x, y):
+        x, y = int(round(x)), int(round(y))
+        if not (0 <= x < BLACK_WALL_ROI[2] and 0 <= y < BLACK_WALL_ROI[3]):
+            return None
+        for blob in color_blobs:
+            if blob.x <= x < blob.x + blob.w and blob.y <= y < blob.y + blob.h:
+                return None
+        return mask.get_pixel((x, y)) > 127
+
+    if is_wall(reference_x, reference_y) is not False:
+        return []
+
+    for line in mask.find_line_segments(merge_distance=5, max_theta_difference=10):
+        x1, y1, x2, y2 = line[0], line[1], line[2], line[3]
+        dx, dy = x2 - x1, y2 - y1
+        length = math.sqrt(dx * dx + dy * dy)
+        if length < MIN_WALL_LINE_LENGTH or abs(dy) < MIN_WALL_LINE_HEIGHT:
+            continue
+
+        # a*x + b*y + c es distancia firmada; positivo hacia nuestro suelo.
+        a, b = -dy / length, dx / length
+        c = -a * x1 - b * y1
+        reference_distance = a * reference_x + b * reference_y + c
+        if abs(reference_distance) <= WALL_BOUNDARY_MARGIN:
+            continue
+        if reference_distance < 0:
+            a, b, c = -a, -b, -c
+
+        valid_samples = 0
+        for index in range(1, 6):
+            x = x1 + dx * index / 6
+            y = y1 + dy * index / 6
+            distance = WALL_SAMPLE_DISTANCE
+            if is_wall(x - a * distance, y - b * distance) is not True:
+                continue
+            if is_wall(x + a * distance, y + b * distance) is not False:
+                continue
+            # El suelo debe continuar hacia el robot: evita usar el borde superior.
+            if all(is_wall(x + (reference_x - x) * step / 5,
+                           y + (reference_y - y) * step / 5) is False
+                   for step in range(1, 5)):
+                valid_samples += 1
+
+        if valid_samples < 4:
+            continue
+
+        near_x = x1 + dx * (reference_y - y1) / dy
+        side = 0 if near_x < reference_x else 1
+        # Preferir el borde largo mas cercano, no la cara despues de la esquina.
+        score = length / (1 + min(y1, y2))
+        if score > scores[side]:
+            scores[side] = score
+            boundaries[side] = (a, b, c)
+
+    return [boundary for boundary in boundaries if boundary is not None]
+
+
+def is_obstacle_inside_walls(blob, boundaries):
+    if not is_vertical_obstacle(blob):
+        return False
+    # Con 180 grados, cy - h/2 es la base. No usar el centro del pilar.
+    floor_y = max(0, int(blob.cy - blob.h / 2))
+    if floor_y <= DETECTION_ROI[1] + 1:
+        return True  # Base recortada: no rechazar por una posicion incierta.
+    inside = all(a * blob.cx + b * floor_y + c >= -WALL_BOUNDARY_MARGIN
+                 for a, b, c in boundaries)
+    if PRINT_DIAGNOSTICS and not inside:
+        print("obstacle outside walls:", blob.cx, floor_y)
+    return inside
 
 
 def largest_valid_blob(blobs, validator=None):
@@ -106,12 +196,9 @@ def configure_camera():
     camera.auto_exposure(False, exposure_us=9000)
     camera.snapshot()
     camera.auto_whitebal(False, rgb_gain_db=(25, 22, 27))
-    camera.brightness(-1)
+    camera.brightness(0)
     camera.saturation(0)
-    camera.contrast(-1)
-
-    if camera.cid() in (csi.OV7725, csi.OV5640):
-        camera.ioctl(csi.IOCTL_SET_NIGHT_MODE, False)
+    camera.contrast(0)
 
     camera.snapshot(time=2000)
     return camera
@@ -168,7 +255,14 @@ def main():
             merge=True,
         )
         line = largest_valid_blob(line_blobs, lambda blob: True)
-        obstacle = largest_valid_blob(obstacle_blobs, is_vertical_obstacle)
+        boundaries = find_wall_boundaries(
+            img,
+            list(obstacle_blobs) + list(wall_blobs) + list(line_blobs),
+        )
+        obstacle = largest_valid_blob(
+            obstacle_blobs,
+            lambda blob: is_obstacle_inside_walls(blob, boundaries),
+        )
         parking_wall = largest_valid_blob(
             wall_blobs,
             is_horizontal_parking_wall,
@@ -252,6 +346,16 @@ def main():
             color=(255, 0, 0),
             thickness=2,
         )
+
+        # Proyectar los limites a toda la altura, despues de las detecciones.
+        # a no es cero: los segmentos aceptados tienen extension vertical.
+        for a, b, c in boundaries:
+            img.draw_line(
+                (int(round(-c / a)), 0,
+                 int(round(-(b * 239 + c) / a)), 239),
+                color=(255, 255, 0),
+                thickness=2,
+            )
 
         update_packet(
             packet,
