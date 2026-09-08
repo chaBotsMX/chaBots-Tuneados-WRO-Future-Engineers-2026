@@ -2534,7 +2534,9 @@ The final current-robot BOM still needs the verified purchase prices and quantit
 
 ## 13. Videos and Resources <a name="resources"></a>
 
+- [chaBots Tuneados Open Challenge](https://youtu.be/oslJ-CmbmxM?si=qDnezuR2ccuzMVyi)
 
+- [chaBots Tuneados Obstacles Challenge](https://youtu.be/23dmH0szIEk?si=_IEdCU9ZLpq2j83h)
 
 - [WRO 2026 Future Engineers General Rules](https://wro-association.org/wp-content/uploads/WRO-2026-Future-Engineers-Self-Driving-Cars-General-Rules.pdf)
 
