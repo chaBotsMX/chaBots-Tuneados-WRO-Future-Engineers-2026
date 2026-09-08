@@ -144,7 +144,7 @@ I am a Mechanical Engineering student that has been participating in robotics co
 
 
 
-> "No."
+> "I miss her."
 
 
 
