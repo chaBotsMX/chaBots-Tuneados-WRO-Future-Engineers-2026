@@ -1335,9 +1335,9 @@ The [Electronics](Electronics/) directory contains the editable Altium projects,
 
 | Board | Schematic PDFs | Editable project and PCB layout | Manufacturing files | 3D model |
 |---|---|---|---|---|
-| Main PCB and motor driver | [Main schematic](Electronics/main-pcb/WRO-MAIN.pdf) · [H-bridge schematic](Electronics/main-pcb/H-BRIDGE-SCH.pdf) | [Altium project](Electronics/main-pcb/WRO.PrjPcb) · [PCB layout](Electronics/main-pcb/MAIN-PCB.PcbDoc) | [Gerber archive](Electronics/main-pcb/MAIN-GERBER.rar) | [STEP](Electronics/main-pcb/MAINWRO-PCB.STEP) |
-| Camera interface PCB | [Camera schematic](Electronics/cam-pcb/CAM-SCH.pdf) | [Altium project](Electronics/cam-pcb/WRO-CAMERA.PrjPcb) · [PCB layout](Electronics/cam-pcb/CAM-PCB.PcbDoc) | [Gerber archive](Electronics/cam-pcb/CAMERA-GERBER.rar) | [STEP](Electronics/cam-pcb/CAM-PCB.step) |
-| ToF interface PCB | [ToF schematic](Electronics/tof-pcb/TOF-SCH.pdf) | [Altium project](Electronics/tof-pcb/WRO-TOF.PrjPcb) · [PCB layout](Electronics/tof-pcb/TOF-PCBPcbDoc.PcbDoc) | [Gerber archive](Electronics/tof-pcb/TOF-GERBER.rar) | [STEP](Electronics/tof-pcb/TOF-PCB.step) |
+| Main PCB and motor driver | [Main schematic](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/Electronics/main-pcb/WRO-MAIN.pdf) · [H-bridge schematic](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/Electronics/main-pcb/H-BRIDGE-SCH.pdf) | [Altium project](Electronics/main-pcb/WRO.PrjPcb) · [PCB layout](Electronics/main-pcb/MAIN-PCB.PcbDoc) | [Gerber archive](Electronics/main-pcb/MAIN-GERBER.rar) | [STEP](Electronics/main-pcb/MAINWRO-PCB.STEP) |
+| Camera interface PCB | [Camera schematic](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/Electronics/cam-pcb/CAM-SCH.pdf) | [Altium project](Electronics/cam-pcb/WRO-CAMERA.PrjPcb) · [PCB layout](Electronics/cam-pcb/CAM-PCB.PcbDoc) | [Gerber archive](Electronics/cam-pcb/CAMERA-GERBER.rar) | [STEP](Electronics/cam-pcb/CAM-PCB.step) |
+| ToF interface PCB | [ToF schematic](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/Electronics/tof-pcb/TOF-SCH.pdf) | [Altium project](Electronics/tof-pcb/WRO-TOF.PrjPcb) · [PCB layout](Electronics/tof-pcb/TOF-PCBPcbDoc.PcbDoc) | [Gerber archive](Electronics/tof-pcb/TOF-GERBER.rar) | [STEP](Electronics/tof-pcb/TOF-PCB.step) |
 
 The PDFs provide readable circuit references without requiring a PCB editor. Each board folder also includes editable `.SchDoc` schematic files and PNG previews. Open the `.PrjPcb` project in Altium Designer to work with its schematic and layout; extract the `.rar` archive to access the supplied Gerber files. The STEP models support mechanical integration with the chassis and mounts.
 
@@ -2190,14 +2190,7 @@ The historical table above is not part of the current robot total. Replacing a s
 
 ## 13. Resources <a name="resources"></a>
 
-The [competition videos](#competition-videos) are featured at the beginning of this README.
-
-- [WRO 2026 Future Engineers General Rules](https://wro-association.org/wp-content/uploads/WRO-2026-Future-Engineers-Self-Driving-Cars-General-Rules.pdf)
-
-- [WRO 2026 Future Engineers Documentation Rubric](https://wro-association.org/wp-content/uploads/WRO-2026-Future-Engineers-Documentation-Rubric.pdf)
-
-- [GitHub Repos](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026)
-
+For resources links pls visit https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026 
 
 ---
 
@@ -2354,24 +2347,17 @@ Template for future detailed entries. Keep dates in YYYY-MM-DD format.
 - **Next action:** <Remaining work>
 -->
 
----
+
 
 ## 15. License <a name="license"></a>
 
-
-
-```
 
 MIT License
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software.
 
-```
 
 
 
----
 
-
-
->  *Document maintained by Chabots | Last updated: Sep 2026*
+  Document maintained by Chabots | Last updated: Sep 2026*
