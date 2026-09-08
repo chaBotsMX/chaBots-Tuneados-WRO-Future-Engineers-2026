@@ -39,10 +39,22 @@
 
 This repository contains the documentation for **ChaBots'** participation in the **WRO Future Engineers 2026** category. Our robot was designed and built by a team of Mexican students passionate about robotics and education.
 
+## Competition Videos <a name="competition-videos"></a>
+
+Watch Pistonudo complete the Open and Obstacles challenges. Select a preview to open the corresponding video on YouTube.
+
+| Open Challenge | Obstacles Challenge |
+|:---:|:---:|
+| [![Watch the Open Challenge](https://img.youtube.com/vi/oslJ-CmbmxM/hqdefault.jpg)](https://youtu.be/oslJ-CmbmxM) | [![Watch the Obstacles Challenge](https://img.youtube.com/vi/23dmH0szIEk/hqdefault.jpg)](https://youtu.be/23dmH0szIEk) |
+| [▶ Watch Open Challenge](https://youtu.be/oslJ-CmbmxM) | [▶ Watch Obstacles Challenge](https://youtu.be/23dmH0szIEk) |
+
+
 
 
 
 ## 📜 Table of Contents
+
+🎬 [Competition Videos](#competition-videos)
 
 1. 🧑‍💻 [The Team](#the-team)
 2. 🎯 [The Challenge](#the-challenge)
@@ -56,7 +68,7 @@ This repository contains the documentation for **ChaBots'** participation in the
 10. 🧪 [Testing, Validation and Results](#testing-validation)
 11. 🛠️ [Construction, Serviceability and Debugging](#construction-guide)
 12. 💰 [Cost Report](#cost-report)
-13. 📚 [Videos and Resources](#resources)
+13. 📚 [Resources](#resources)
 14. 📋 [Engineering Development Log](#engineering-log)
 15. ©️ [License](#license)
 ---
@@ -336,7 +348,7 @@ The following table compares some motors we considered. We usually prefer motors
 
 
 
-| Model          | Speed (RPM) | Torque (kg/cm) | Current (A) | Weight (g) |Voltage| Price ($) |
+| Model          | Speed (RPM) | Torque (kg/cm) | Current (A) | Weight (g) |Voltage| Price (USD) |
 |----------------|-------------|----------------|-------------|------------|---|-----------|
 | Maxon DCX19    | 600         | 6.5            | 2.0         | 80         |12V| 500       |
 | Pololu 25D HP 20.4:1   | 480 | 4.8            | 6.0         | 107        | 6V|37.95      |
@@ -470,7 +482,7 @@ Here are some servo options:
 
 
 
-| Model      | Torque (kg/cm)| Current (A) | Size|Weight (g) |Quality| Price ($) |
+| Model      | Torque (kg/cm)| Current (A) | Size|Weight (g) |Quality| Price (USD) |
 |------------|---------------|-------------|-----|------|---|-----------|
 | HS 85MG    | 3             | 1.2         | Small|    21    |Excellent| 40.00      |
 | MG996      |  13           | 1.2         | Really big|    66    | Bad|10.00      |
@@ -579,13 +591,13 @@ During a turn, every wheel follows a circle with a different radius around one i
 
 Ackermann steering approximates the required relationship by arranging the steering arms and tie rods so that the projected wheel axes intersect near the rear axle. For wheelbase (L), front track width (T), and turn radius (R) measured to the vehicle centerline:
 
-$$
+```math
 \tan(\delta_{inside}) = \frac{L}{R - T/2}
-$$
+```
 
-$$
+```math
 \tan(\delta_{outside}) = \frac{L}{R + T/2}
-$$
+```
 
 Therefore, the inside steering angle must always be greater than the outside angle.
 
@@ -606,9 +618,9 @@ The factors we used to reduce unpredictable slip were:
 
 The geometric turning radius depends mainly on wheelbase and steering angle. A simplified bicycle model gives:
 
-$$
+```math
 R \approx \frac{L}{\tan(\delta)}
-$$
+```
 
 A shorter wheelbase or a greater steering angle reduces the theoretical radius. In practice, however, simply commanding a greater angle does not guarantee a tighter turn. Tire scrub, servo backlash, linkage deformation, insufficient torque, and wheel-to-chassis interference can make the real turning radius larger than the calculated value.
 
@@ -1122,21 +1134,21 @@ The BNO085 IMU is powered from the Teensy's 3.3 V output and is therefore not co
 
 Power is expressed in watts:
 
-$$
+```math
 P = V \times I
-$$
+```
 
 Energy stored in the battery is expressed in watt-hours:
 
-$$
-E = V \times Ah
-$$
+```math
+E = V \times Q_{\mathrm{Ah}}
+```
 
 For the 11.1 V, 1000 mAh battery:
 
-$$
-E = 11.1\ V \times 1\ Ah = 11.1\ Wh
-$$
+```math
+E = 11.1\,\mathrm{V} \times 1\,\mathrm{Ah} = 11.1\,\mathrm{Wh}
+```
 
 #### Component Power Budget
 
@@ -1157,23 +1169,23 @@ The motor's 1.5 A value is the expected high-load operating current used for the
 
 The normal estimated current, including the servo's published running current, is:
 
-$$
-I_{5V,normal} = 0.100 + 0.250 + 0.025 + 0.150 + 0.240 = 0.765\ A
-$$
+```math
+I_{5V,normal} = 0.100 + 0.250 + 0.025 + 0.150 + 0.240 = 0.765\,\mathrm{A}
+```
 
-$$
-P_{5V,normal} = 5\ V \times 0.765\ A = 3.825\ W
-$$
+```math
+P_{5V,normal} = 5\,\mathrm{V} \times 0.765\,\mathrm{A} = 3.825\,\mathrm{W}
+```
 
 Using the 1.2 A servo transient as the design condition:
 
-$$
-I_{5V,peak} = 0.100 + 0.250 + 0.025 + 0.150 + 1.200 = 1.725\ A
-$$
+```math
+I_{5V,peak} = 0.100 + 0.250 + 0.025 + 0.150 + 1.200 = 1.725\,\mathrm{A}
+```
 
-$$
-P_{5V,peak} = 5\ V \times 1.725\ A = 8.625\ W
-$$
+```math
+P_{5V,peak} = 5\,\mathrm{V} \times 1.725\,\mathrm{A} = 8.625\,\mathrm{W}
+```
 
 A small additional margin is required for the BNO085 because it is powered through the Teensy's onboard 3.3 V regulator. Therefore, the practical 5 V design budget is approximately **1.73 A and 8.7 W**.
 
@@ -1181,13 +1193,13 @@ The 5 V rail uses a **Pololu D24V50F5** regulator, rated for approximately 5 A. 
 
 Assuming 90% efficiency:
 
-$$
-P_{in,5V} = \frac{8.7\ W}{0.90} \approx 9.67\ W
-$$
+```math
+P_{in,5V} = \frac{8.7\,\mathrm{W}}{0.90} \approx 9.67\,\mathrm{W}
+```
 
-$$
-P_{loss,5V} = 9.67 - 8.7 \approx 0.97\ W
-$$
+```math
+P_{loss,5V} = 9.67 - 8.7 \approx 0.97\,\mathrm{W}
+```
 
 #### 3.3 V ToF Rail
 
@@ -1195,35 +1207,35 @@ Each VL53L8CX module uses approximately 100 mA during typical continuous ranging
 
 For four sensors:
 
-$$
-I_{3.3V,typical} = 4 \times 0.100 = 0.400\ A
-$$
+```math
+I_{3.3V,typical} = 4 \times 0.100 = 0.400\,\mathrm{A}
+```
 
-$$
-P_{3.3V,typical} = 3.3\ V \times 0.400\ A = 1.32\ W
-$$
+```math
+P_{3.3V,typical} = 3.3\,\mathrm{V} \times 0.400\,\mathrm{A} = 1.32\,\mathrm{W}
+```
 
 For the peak design condition:
 
-$$
-I_{3.3V,peak} = 4 \times 0.150 = 0.600\ A
-$$
+```math
+I_{3.3V,peak} = 4 \times 0.150 = 0.600\,\mathrm{A}
+```
 
-$$
-P_{3.3V,peak} = 3.3\ V \times 0.600\ A = 1.98\ W
-$$
+```math
+P_{3.3V,peak} = 3.3\,\mathrm{V} \times 0.600\,\mathrm{A} = 1.98\,\mathrm{W}
+```
 
 The ToF rail uses a **Pololu D24V10F3**, rated for approximately 1 A. A 600 mA peak load uses 60% of its nominal current capacity.
 
 Assuming 87% efficiency:
 
-$$
-P_{in,3.3V} = \frac{1.98\ W}{0.87} \approx 2.28\ W
-$$
+```math
+P_{in,3.3V} = \frac{1.98\,\mathrm{W}}{0.87} \approx 2.28\,\mathrm{W}
+```
 
-$$
-P_{loss,3.3V} = 2.28 - 1.98 \approx 0.30\ W
-$$
+```math
+P_{loss,3.3V} = 2.28 - 1.98 \approx 0.30\,\mathrm{W}
+```
 
 Because the VL53L8CX carrier boards are powered close to their minimum accepted input voltage, the voltage must also be measured directly at the sensor connectors under maximum load to verify that wiring losses do not reduce it excessively.
 
@@ -1233,15 +1245,15 @@ The motor is connected to the 3S battery through the VNH7070AS motor driver.
 
 At the selected 1.5 A design operating current and the battery's nominal voltage:
 
-$$
-P_{motor} = 11.1\ V \times 1.5\ A = 16.65\ W
-$$
+```math
+P_{motor} = 11.1\,\mathrm{V} \times 1.5\,\mathrm{A} = 16.65\,\mathrm{W}
+```
 
 At stall:
 
-$$
-P_{motor,stall} = 11.1\ V \times 5\ A = 55.5\ W
-$$
+```math
+P_{motor,stall} = 11.1\,\mathrm{V} \times 5\,\mathrm{A} = 55.5\,\mathrm{W}
+```
 
 Stall is not a normal operating condition, but it must be considered when selecting the battery, motor driver, wiring, connectors, switch, and protection system.
 
@@ -1260,17 +1272,17 @@ This estimate does not yet include the motor driver's conduction losses, regulat
 
 With an ideal 11.1 Wh battery:
 
-$$
-Runtime_{ideal} = \frac{11.1\ Wh}{28.60\ W} = 0.388\ h \approx 23.3\ minutes
-$$
+```math
+t_{\mathrm{ideal}} = \frac{11.1\,\mathrm{Wh}}{28.60\,\mathrm{W}} = 0.388\,\mathrm{h} \approx 23.3\,\mathrm{minutes}
+```
 
 This value is only a theoretical continuous-load estimate. Real runtime will be lower because of acceleration peaks, steering activity, battery discharge characteristics, voltage sag, and the required safety reserve.
 
 During a motor stall, the complete system could temporarily demand approximately:
 
-$$
-I_{stall,total} \approx 5.0 + 0.87 + 0.21 = 6.08\ A
-$$
+```math
+I_{stall,total} \approx 5.0 + 0.87 + 0.21 = 6.08\,\mathrm{A}
+```
 
 Therefore, the 1000 mAh battery must support more than 6.08 A without excessive voltage drop. This corresponds to an absolute theoretical minimum of approximately 6.08C, although a substantially higher battery discharge rating should be used to provide adequate margin.
 
@@ -1512,9 +1524,9 @@ The robot remains in `OPEN_TURN` while its heading error is 5° or greater. Once
 
 The Stanley controller is:
 
-$$
+```math
 \theta = k_h\,\operatorname{wrap180}(e_{imu}) + \operatorname{degrees}\left(\operatorname{atan2}(k_s e_{wall}, v + 1)\right)
-$$
+```
 
 where `e_wall` is the selected wall-distance error, `e_imu` is the IMU heading error, and `v` is the current speed. The requested steering value is constrained by the Ackermann controller before it reaches the servo.
 
@@ -1725,20 +1737,20 @@ The N6 provides image coordinates, not a metric distance. The controller therefo
 
 For a detected obstacle, the controller computes:
 
-$$
+```math
 d_{px} = \sqrt{(x - 160)^2 + y^2}
-$$
+```
 
-$$
+```math
 \alpha = \operatorname{atan2}(x - 160, y), \qquad
 \beta = \arcsin\left(\operatorname{clamp}\left(\frac{r_{px}}{d_{px}}, 0, 1\right)\right)
-$$
+```
 
 where `r_px = 120 px` is the tangential safety radius. Green obstacles select a positive direction and red obstacles select a negative direction. The tangential angular error is:
 
-$$
+```math
 e_{tan} = \alpha + s\beta, \qquad s \in \{-1, +1\}
-$$
+```
 
 The controller implements the geometric and blending stages directly:
 
@@ -2177,11 +2189,9 @@ This subtotal intentionally reports only the rows shown. It does not claim to eq
 
 The historical table above is not part of the current robot total. Replacing a supplier or updating a purchase price changes only the corresponding unit-cost and total cells; the hardware specification remains the competition baseline defined in Section 5.1.
 
-## 13. Videos and Resources <a name="resources"></a>
+## 13. Resources <a name="resources"></a>
 
-- [chaBots Tuneados Open Challenge](https://youtu.be/oslJ-CmbmxM?si=qDnezuR2ccuzMVyi)
-
-- [chaBots Tuneados Obstacles Challenge](https://youtu.be/23dmH0szIEk?si=_IEdCU9ZLpq2j83h)
+The [competition videos](#competition-videos) are featured at the beginning of this README.
 
 - [WRO 2026 Future Engineers General Rules](https://wro-association.org/wp-content/uploads/WRO-2026-Future-Engineers-Self-Driving-Cars-General-Rules.pdf)
 
