@@ -1525,7 +1525,7 @@ The robot remains in `OPEN_TURN` while its heading error is 5° or greater. Once
 The Stanley controller is:
 
 ```math
-\theta = k_h\,\operatorname{wrap180}(e_{imu}) + \operatorname{degrees}\left(\operatorname{atan2}(k_s e_{wall}, v + 1)\right)
+\theta = k_h\,\mathrm{wrap180}(e_{imu}) + \frac{180}{\pi}\,\mathrm{atan2}\left(k_s e_{wall}, v + 1\right)
 ```
 
 where `e_wall` is the selected wall-distance error, `e_imu` is the IMU heading error, and `v` is the current speed. The requested steering value is constrained by the Ackermann controller before it reaches the servo.
@@ -1742,8 +1742,8 @@ d_{px} = \sqrt{(x - 160)^2 + y^2}
 ```
 
 ```math
-\alpha = \operatorname{atan2}(x - 160, y), \qquad
-\beta = \arcsin\left(\operatorname{clamp}\left(\frac{r_{px}}{d_{px}}, 0, 1\right)\right)
+\alpha = \mathrm{atan2}(x - 160, y), \qquad
+\beta = \arcsin\left(\min\left(1, \max\left(0, \frac{r_{px}}{d_{px}}\right)\right)\right)
 ```
 
 where `r_px = 120 px` is the tangential safety radius. Green obstacles select a positive direction and red obstacles select a negative direction. The tangential angular error is:
