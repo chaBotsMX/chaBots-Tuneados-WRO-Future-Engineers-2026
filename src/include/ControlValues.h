@@ -84,11 +84,11 @@ constexpr SpeedControlConfig OPEN_CRUISE_SPEED_CONTROL = {
 #define TAN_EVASION_DERIVATIVE_FILTER 0.20f // Derivative filter
 
 // Obstacle Controls
-#define OBSTACLES_PWM_DRIVE -80 // Standar Drive PWM
+#define OBSTACLES_PWM_DRIVE -70 // Standar Drive PWM
 #define OBSTACLES_RECOVERY_TIME_MS 350 // Recovery time when to close to obstacle
 #define SIDE_WALLS_ACTIVATION_DISTANCE_MM 100 // Distance to activate tangent evasion maneuver
 #define NO_OBSTACLE_IMU_GAIN 3.0f
-#define OBSTACLE_CLOSE_RECOVERY_DISTANCE_PX 80 // Image-space distance that starts recovery
+#define OBSTACLE_CLOSE_RECOVERY_DISTANCE_PX 87 // Image-space distance that starts recovery
 
 // SIDE WALLS CONTROLS
 #define SIDE_WALLS_ACTIVATION_DISTANCE_MM 100 // Distance to activate tangent evasion

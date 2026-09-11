@@ -146,7 +146,7 @@ private:
     static constexpr int OBSTACLE_DRIVE_PWM = -100;
     static constexpr uint16_t BLUE_LINE_FRONT_TARGET_MM = 50;
     static constexpr uint32_t BLUE_LINE_REVERSE_TIME_MS = 3000;
-    static constexpr float POST_REVERSE_STRAIGHT_DISTANCE_MM = 250.0f;
+    static constexpr float POST_REVERSE_STRAIGHT_DISTANCE_MM = 300.0f;
 
 
     // States shared by both runs; each firmware uses a subset.

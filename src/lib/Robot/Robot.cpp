@@ -459,7 +459,7 @@ void Robot::exceuteRecoveryTurn(){
             WTF = 0;
             while(WTF < 500){
                 ackermann.setSteeringAngle(-recoveryAngle);
-                move.driveAtPWM(100);
+                move.driveAtPWM(0);
             }
             CAM_SERIAL.flush();
             delay(100); 
@@ -475,7 +475,8 @@ void Robot::setRecoveryTurn(float steeringTarget){
     WTF = 0;
     while(WTF < 1000){
         ackermann.setSteeringAngle(recoveryAngle);
-        move.driveAtPWM(0);
+        //move.driveAtPWM(0);
+        move.controller.brake();
     }
     recoverySteering = 0;
 }
