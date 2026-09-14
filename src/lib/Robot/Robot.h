@@ -31,14 +31,14 @@
 #define IMU_SERIAL Serial4
 
 #define CAM_SERIAL Serial3
-#define CAM_SERIAL_BAUDRATE 115200
+#define CAM_SERIAL_BAUDRATE 1000000
 
 #define CS_FRONT 7
 #define CS_RIGHT 6
 #define CS_LEFT 4
 #define CS_BACK 5
 
-#define TOFS_HZ 60
+#define TOFS_HZ 15 // The configured 8x8 resolution supports at most 15 Hz.
 
 #define  TEENSY_SOFT_REBOOT 0x05FA0004
 
@@ -60,7 +60,8 @@ public:
 
     Robot();
     void updateCam();
-    void updateCamOpen();
+    // Disable line memorization when polling only for debug before the start button.
+    void updateCamOpen(bool rememberLine = true);
 
     void beginComms();
 
@@ -136,17 +137,21 @@ public:
     void executeForwardAfterReverse();
     void setForwardAfterReverse();
 
+    void executeObstaclesEnding();
+    void setObstaclesEnding();
+
 private:
     static constexpr uint8_t GREEN_OBSTACLE = 2;
 
-    uint16_t SENSOR_DATA_TIMEOUT_MS = 50;
+    // At 15 Hz a new reading arrives every ~67 ms. Allow three frame periods.
+    uint16_t SENSOR_DATA_TIMEOUT_MS = 200;
     uint16_t CAMERA_DATA_TIMEOUT_MS = 500;
     uint16_t INVALID_DISTANCE = MAX_VALID_DISTANCE + 1;
     uint8_t CAMERA_NOT_FOUND = 250;
     static constexpr int OBSTACLE_DRIVE_PWM = -100;
     static constexpr uint16_t BLUE_LINE_FRONT_TARGET_MM = 50;
     static constexpr uint32_t BLUE_LINE_REVERSE_TIME_MS = 3000;
-    static constexpr float POST_REVERSE_STRAIGHT_DISTANCE_MM = 300.0f;
+    static constexpr float POST_REVERSE_STRAIGHT_DISTANCE_MM = 30.0f;
 
 
     // States shared by both runs; each firmware uses a subset.
@@ -163,6 +168,7 @@ private:
         APPROACH_BLUE_LINE,
         REVERSE_AFTER_BLUE_LINE,
         FORWARD_AFTER_REVERSE,
+        OBSTACLES_ENDING
     };
 
     int wallDistance = 300;
@@ -176,10 +182,11 @@ private:
     elapsedMillis backDataAge;
     elapsedMillis leftDataAge;
     elapsedMillis rightDataAge;
-    elapsedMillis displayRefreshAge;
     elapsedMillis recoverySteering;
     elapsedMillis blueLineStableAge;
     elapsedMillis blueLineReverseAge;
+    elapsedMillis blueLineForwardTimeOut;
+    elapsedMillis roiChangeTimer;
     int lineId = 0;
     bool recoveryTurn = false;
     float recoveryAngle = 0;
@@ -191,6 +198,8 @@ private:
     OpenMVData vision;
 
     void changeTask(TASK newTask);
+    // Keep the motor stopped and report a boot failure instead of rebooting silently.
+    [[noreturn]] void stopOnStartupError(const char* message);
     static const char* taskName(TASK task);
     // Converts invalid or expired ToF readings to the INVALID_DISTANCE sentinel.
     bool updateSide(TOF4Walls::Side side, uint16_t& rawDistance,

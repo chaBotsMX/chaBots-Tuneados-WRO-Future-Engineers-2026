@@ -6,20 +6,20 @@ from machine import UART
 
 
 OBSTACLE_THRESHOLDS = [
-    (0, 32, 22, 127, -128, 116),  # Red
-    (0, 49, -128, -12, 2, 127)  # Green
+    (0, 36, 9, 79, 20, 127),  # Red
+    (15, 48, -128, -14, 7, 127)  # Green
 ]
 
 PARKING_WALL_THRESHOLDS = [
-    (0, 34, 13, 127, -128, 4)    # Magenta
+    (0, 36, 9, 79, -91, 9)    # Magenta
 ]
 
 BLUE_LINE_THRESHOLD = [
-    (0, 79, -128, 20, -128, -7),  # Blue
+    (23, 38, -10, 127, -13, 6),  # Blue
 ]
 
 BLACK_WALL_THRESHOLD = [(0, 21, -128, 38, -9, 127)]  # Calibrate for black walls
-BLACK_WALL_ROI = (0, 30, 320, 100)  # Nearby wall region; project toward the pillars
+BLACK_WALL_ROI = (0, 30, 320, 70)  # Nearby wall region; project toward the pillars
 WALL_FLOOR_REFERENCE = (160, 4)  # Nearby floor point in crop-local coordinates
 MIN_WALL_LINE_LENGTH = 25
 MIN_WALL_LINE_HEIGHT = 18
@@ -28,7 +28,7 @@ WALL_BOUNDARY_MARGIN = 6  # Pixel tolerance, not distance from the robot
 WALL_HOLD_MS = 1000  # Keep each wall after losing it; 0 disables retention
 
 UART_ID = 3
-UART_BAUDRATE = 115200
+UART_BAUDRATE = 1000000
 
 START_BYTE_HIGH = 0xAA
 START_BYTE_LOW = 0x55
@@ -37,7 +37,8 @@ PACKET_SIZE = 14
 NOT_FOUND_X = 250
 NOT_FOUND_Y = 250
 
-DETECTION_ROI = (20, 30, 280, 80)
+DETECTION_ROI = (10, 30, 300, 85)
+NARROW_DETECTION_ROI = (70, 30, 190, 95)
 BLUE_DETECTION_ROI = (0, 12, 320, 38)
 
 MIN_OBSTACLE_PIXELS = 40
@@ -49,10 +50,14 @@ MIN_LINE_AREA = 40
 
 MIN_OBSTACLE_ASPECT_RATIO = 0.5
 MIN_WALL_ASPECT_RATIO = 1.0
-OBSTACLE_HOLD_MS = 150  # Wait after losing the target before locking onto another
-OBSTACLE_MATCH_DISTANCE = 40  # Maximum base displacement in pixels
+OBSTACLE_HOLD_MS = 50  # Wait after losing the target before locking onto another
+OBSTACLE_CLEAR_MS = 250  # Report no obstacle after target loss, before acquiring another
+OBSTACLE_MATCH_DISTANCE = 70  # Maximum base displacement in pixels
 
 PRINT_DIAGNOSTICS = False
+
+
+uart = UART(UART_ID, baudrate=UART_BAUDRATE)
 
 
 def is_vertical_obstacle(blob):
@@ -223,9 +228,9 @@ def configure_camera():
     camera.pixformat(csi.RGB565)
     camera.framesize(csi.QVGA)
     camera.framerate(120)
-    camera.auto_gain(False, gain_db=20.0)
+    camera.auto_gain(False, gain_db=25.0)
     camera.snapshot()
-    camera.auto_exposure(False, exposure_us=10000)
+    camera.auto_exposure(False, exposure_us=6000)
     camera.snapshot()
     camera.auto_whitebal(False, rgb_gain_db=(25, 22, 27))
     camera.brightness(0)
@@ -251,10 +256,16 @@ def set_ready_leds(enabled):
         led_b.off()
 
 
+def reciveRoi():
+    receive = None
+    while uart.any():
+        receive = uart.read(1)
+    return receive
+
+
 def main():
     set_ready_leds(False)
     camera = configure_camera()
-    uart = UART(UART_ID, baudrate=UART_BAUDRATE)
     packet = bytearray(PACKET_SIZE)
     clock = time.clock()
     ready_leds_on = False
@@ -262,19 +273,32 @@ def main():
     wall_last_seen = [0, 0]
     locked_obstacle = None
     obstacle_last_seen = 0
-
+    obstacle_clear_start = None
+    roiUart = 1
     while True:
         clock.tick()
         img = camera.snapshot()
+        obstacle_blobs = None
+        new = reciveRoi()
+        if new and new[0] in (1, 2):
+            roiUart = new[0]
+        if roiUart == 1:
 
-        obstacle_blobs = img.find_blobs(
-            OBSTACLE_THRESHOLDS,
-            roi=DETECTION_ROI,
-            pixels_threshold=MIN_OBSTACLE_PIXELS,
-            area_threshold=MIN_OBSTACLE_AREA,
-            merge=False,
-        )
-
+            obstacle_blobs = img.find_blobs(
+                OBSTACLE_THRESHOLDS,
+                roi=DETECTION_ROI,
+                pixels_threshold=MIN_OBSTACLE_PIXELS,
+                area_threshold=MIN_OBSTACLE_AREA,
+                merge=False,
+            )
+        else:
+            obstacle_blobs = img.find_blobs(
+                OBSTACLE_THRESHOLDS,
+                roi=NARROW_DETECTION_ROI,
+                pixels_threshold=MIN_OBSTACLE_PIXELS,
+                area_threshold=MIN_OBSTACLE_AREA,
+                merge=False,
+            )
         wall_blobs = img.find_blobs(
             PARKING_WALL_THRESHOLDS,
             roi=DETECTION_ROI,
@@ -310,7 +334,14 @@ def main():
         valid_obstacles = [blob for blob in obstacle_blobs
                            if is_obstacle_inside_walls(blob, boundaries)]
         now = time.ticks_ms()
-        if locked_obstacle is None:
+        if (obstacle_clear_start is not None and
+                time.ticks_diff(now, obstacle_clear_start) >= OBSTACLE_CLEAR_MS):
+            obstacle_clear_start = None
+
+        if obstacle_clear_start is not None:
+            # Keep sending the no-obstacle packet without blocking camera updates.
+            obstacle = None
+        elif locked_obstacle is None:
             # Use size only when acquiring a new target.
             obstacle = largest_valid_blob(valid_obstacles)
         else:
@@ -321,9 +352,14 @@ def main():
             obstacle_last_seen = now
         elif locked_obstacle is not None:
             if time.ticks_diff(now, obstacle_last_seen) >= OBSTACLE_HOLD_MS:
-                obstacle = largest_valid_blob(valid_obstacles)
-                locked_obstacle = obstacle
-                obstacle_last_seen = now
+                locked_obstacle = None
+                if OBSTACLE_CLEAR_MS > 0:
+                    # Start once on confirmed loss, even if another blob is visible.
+                    obstacle_clear_start = now
+                else:
+                    obstacle = largest_valid_blob(valid_obstacles)
+                    locked_obstacle = obstacle
+                    obstacle_last_seen = now
             elif is_obstacle_inside_walls(locked_obstacle, boundaries):
                 # Flicker: keep the last position without refreshing the timeout.
                 obstacle = locked_obstacle
@@ -414,6 +450,11 @@ def main():
         img.draw_rectangle(
             BLACK_WALL_ROI,
             color=(200, 200, 0),
+            thickness=2,
+        )
+        img.draw_rectangle(
+            NARROW_DETECTION_ROI,
+            color=(255, 0, 0),
             thickness=2,
         )
 

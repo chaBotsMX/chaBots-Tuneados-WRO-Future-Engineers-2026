@@ -9,7 +9,6 @@
 
 #include "TOF4Walls.h"
 #include "ControlValues.h"
-#include <algorithm>
 
 #ifdef DEBUG_PRINT_TOFS
 namespace {
@@ -41,7 +40,7 @@ void printTofMatrix(const VL53L8CX_ResultsData& results, uint8_t side) {
 #endif
 
 //Selected zonea for detecntion of walls, 43 and 44 are the central zones for 8x8 resolution
-const uint8_t TOF4Walls::CENTRAL_ZONES[NUM_LOOKUP_ZONES] = {27, 35};
+const uint8_t TOF4Walls::CENTRAL_ZONES[NUM_LOOKUP_ZONES] = {28, 36}; // 27 and 36 are tof central
 
 TOF4Walls::TOF4Walls(SPIClass& spi,
                      int csFront,
@@ -137,7 +136,8 @@ void TOF4Walls::updateOne(VL53L8CX& sensor, uint8_t index) {
 }
 
 int16_t TOF4Walls::computeWallDistance(const VL53L8CX_ResultsData& results, uint8_t& chosenStatus) const {
-    int16_t valid[2];
+    constexpr uint8_t MAX_INVALID_PERCENT = 40;
+    int32_t sum = 0;
     uint8_t count = 0;
     //status 255 means no valid measurement, 5 is the best, then 6 and 9 are acceptable, the rest are discarded
     chosenStatus = 255;
@@ -156,31 +156,23 @@ int16_t TOF4Walls::computeWallDistance(const VL53L8CX_ResultsData& results, uint
             continue;
         }
 
-        valid[count++] = results.distance_mm[z];
+        sum += results.distance_mm[z];
+        count++;
 
     }
-    //if count is 0 means theres no reading, return -1 to indicate that.
-    if (count == 0) {
+    // Reject if more than 40% of the selected zones are invalid.
+    // Cross multiplication avoids rounding the percentage (exactly 40% is allowed).
+    const uint16_t invalidCount = NUM_LOOKUP_ZONES - count;
+    if (count == 0 || invalidCount * 100 > NUM_LOOKUP_ZONES * MAX_INVALID_PERCENT) {
         return -1;
     }
 
-    return medianInt16(valid, count);
+    // Arithmetic mean of the valid zones, in whole millimeters.
+    return static_cast<int16_t>(sum / count);
 }
 
 bool TOF4Walls::isUsableStatus(uint8_t status) {
     return (status == 5 || status == 6 || status == 9);
-}
-
-int16_t TOF4Walls::medianInt16(int16_t* values, uint8_t count) {
-    // order the values to get median.
-    std::sort(values, values + count);
-
-    //Check if count is odd or even to return the median value, if its odd return the middle value, if its even return the average of the two middle values.
-    if (count & 1) {
-        return values[count / 2];
-    }
-
-    return (values[(count / 2) - 1] + values[count / 2]) / 2;
 }
 
 int16_t TOF4Walls::getDistance(Side side) const {
