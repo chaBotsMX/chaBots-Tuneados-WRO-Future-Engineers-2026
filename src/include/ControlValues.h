@@ -74,12 +74,12 @@ constexpr SpeedControlConfig OPEN_CRUISE_SPEED_CONTROL = {
 
 
 // Tangential evasion controls. All distance values in this block are OpenMV pixels.
-#define TAN_EVASION_SECURITY_RADIUS_PX 115
+#define TAN_EVASION_SECURITY_RADIUS_PX 110
 #define TAN_EVASION_ACTIVATION_DISTANCE_PX 200
-#define TAN_EVASION_FULL_EVASION_DISTANCE_PX 160
+#define TAN_EVASION_FULL_EVASION_DISTANCE_PX 180
 #define TAN_EVASION_ORIENTATION_GAIN 1.0f // Gain for orientation error in tangent evasion
-#define TAN_EVASION_EVASION_GAIN 1.5f // Gain for evasion
-#define TAN_EVASION_KP 0.75f // Proportional gain for PD
+#define TAN_EVASION_EVASION_GAIN 1.85f // Gain for evasion
+#define TAN_EVASION_KP 0.50f // Proportional gain for PD
 #define TAN_EVASION_KD 0.02f // Derivative gain for PD
 #define TAN_EVASION_DERIVATIVE_FILTER 0.20f // Derivative filter
 
@@ -113,12 +113,5 @@ constexpr SpeedControlConfig OPEN_CRUISE_SPEED_CONTROL = {
 #define CORNER_DETECTION_DISTANCE_MM 500
 
 // a;adir histeresis a la recuperaicon  de la rodna de obstaculos, 
-// mas estados en obstaculos
-// corregir que no se inicie IMU
-// mas estados para la recuperacion en abierta
-// deteccion correcta de aldos en abierta
 // deteccion de giro en obstaculos
-// mas casos de vueltas en obstaculos para que no choque sie sta muy cerca de la pared a la que gira
-// que siga la pared si el obstaculo lo obliga a girar hacia esa pared
-// Probar N6
-// checar que tan viable es hace homografia  
+// checar que tan viable es hacer homografia  

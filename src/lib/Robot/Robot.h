@@ -22,6 +22,7 @@
 #include <SPI.h>
 #include <elapsedMillis.h>
 #include "cameraReceiver.h"
+#include "OpenDirectionMonitor.h"
 
 #define IMU_BAUD_RATE 115200
 #define XIAO_BAUD_RATE 2000000
@@ -85,9 +86,11 @@ public:
     // Runs one non-blocking step of evasion, blue-line, and parking logic.
     void executeTaskObstacles();
 
-    // Selects the course direction from current side readings, falling back to
-    // the most recent useful readings when both sides are out of range.
+    // Open's first turn prefers a confirmed gap, falling back to side distances.
     void decideDir();
+
+    // Non-blocking obstacle startup: reverse until parking identifies the outer wall.
+    void decideDirObstacles();
 
 
 
@@ -152,6 +155,11 @@ private:
     static constexpr uint16_t BLUE_LINE_FRONT_TARGET_MM = 50;
     static constexpr uint32_t BLUE_LINE_REVERSE_TIME_MS = 3000;
     static constexpr float POST_REVERSE_STRAIGHT_DISTANCE_MM = 30.0f;
+    static constexpr int PARKING_SEARCH_REVERSE_PWM = 70;
+    static constexpr uint32_t PARKING_SEARCH_TIMEOUT_MS = 5000;
+    static constexpr uint16_t PARKING_SEARCH_REAR_STOP_MM = 100;
+    static constexpr int PARKING_DIRECTION_CENTER_MARGIN_PX = 5;
+    static constexpr uint8_t PARKING_DIRECTION_CONFIRM_SAMPLES = 3;
 
 
     // States shared by both runs; each firmware uses a subset.
@@ -164,6 +172,7 @@ private:
         OPEN_TURN,
         OPEN_ENDING,
         FINISHED,
+        DECIDE_DIR_OBSTACLES,
         EVADE_UNTIL_EDGE,
         APPROACH_BLUE_LINE,
         REVERSE_AFTER_BLUE_LINE,
@@ -187,11 +196,18 @@ private:
     elapsedMillis blueLineReverseAge;
     elapsedMillis blueLineForwardTimeOut;
     elapsedMillis roiChangeTimer;
+    elapsedMillis parkingSearchAge;
+    uint32_t parkingDirectionLastFrameMs = 0;
+    uint8_t parkingDirectionSamples = 0;
+    DIRECTIONS parkingDirectionCandidate = DIRECTIONS::COUNTERCLOCKWISE;
+    bool obstacleDirectionKnown = false;
+    bool parkingSearchStopped = false;
     int lineId = 0;
     bool recoveryTurn = false;
     float recoveryAngle = 0;
     uint16_t lastUsefulLeftDistance = MAX_VALID_DISTANCE + 1;
     uint16_t lastUsefulRightDistance = MAX_VALID_DISTANCE + 1;
+    OpenDirectionMonitor openDirectionMonitor;
     bool blueLineArmed = true;
     bool blueLineLastSample = false;
 

@@ -2,6 +2,7 @@ import csi
 import math
 import pyb
 import time
+import mjpeg
 from machine import UART
 
 
@@ -59,6 +60,8 @@ PRINT_DIAGNOSTICS = False
 
 
 uart = UART(UART_ID, baudrate=UART_BAUDRATE)
+
+m = mjpeg.Mjpeg('video_openmv.mjpeg')
 
 
 def is_vertical_obstacle(blob):
@@ -279,6 +282,7 @@ def main():
     while True:
         clock.tick()
         img = camera.snapshot()
+        m.add_frame(img)
         obstacle_blobs = None
         new = reciveRoi()
         if new and new[0] in (1, 2):
