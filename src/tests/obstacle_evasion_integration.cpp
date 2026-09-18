@@ -1,4 +1,4 @@
-// Run with: python3 tests/check_obstacle_evasion_integration.py
+// Run with: python3 tests/check_obstacle_evasion_integration.py --suite evasion
 #include "DataTypes.h"
 #include "ObstacleEvasion.h"
 #include "OpenDirectionMonitor.h"
@@ -7,15 +7,28 @@
 #include <assert.h>
 #include <initializer_list>
 #include <stdio.h>
+#include <string>
 
 uint32_t testNow = 1000;
-struct SerialStub { template<class T> void print(T) {} } Serial;
+struct SerialStub {
+    std::string trace;
+    int capacity = 4096;
+    template<class T> void print(T) {}
+    int availableForWrite() { return capacity; }
+    void write(const uint8_t* data, int size) { trace.append(reinterpret_cast<const char*>(data), size); }
+} Serial;
 
 // Only hardware and unrelated states are replaced. The evasion method below is
 // extracted from Robot.cpp, and TrajectoryController.cpp is compiled unchanged.
 struct Robot {
     struct IMU { float error = 0; float getError() { return error; } } imu;
-    struct Ackermann { float angle = 0; void setSteeringAngle(float value) { angle = value; } } ackermann;
+    struct Ackermann {
+        float angle = 0, lastSteeringAngleDeg = 0;
+        void setSteeringAngle(float value) {
+            angle = value;
+            lastSteeringAngleDeg = constrain(value, -25.94f, 25.94f);
+        }
+    } ackermann;
     struct Move {
         struct Controller { float getDistanceMM() { return 2000; } } controller;
         int pwm = 0;
@@ -31,14 +44,14 @@ struct Robot {
     static constexpr int OBSTACLE_DRIVE_PWM = -100;
     int lapCount = 1;
     bool obstacleDirectionKnown = true;
-    bool blueLineArmed = true, blueLineLastSample = false, approach = false, recovery = false;
+    bool blueLineArmed = true, blueLineLastSample = false, approach = false, recoveryTurn = false;
     elapsedMillis blueLineStableAge;
     Robot() {
         validData.left = validData.right = 500;
         vision.receivedAtMs = testNow;
     }
-    void setApproachBlueLine() { approach = true; ++lapCount; }
-    void setRecoveryTurn(float) { recovery = true; }
+    void setApproachBlueLine() { tc.resetDepthGain(); approach = true; ++lapCount; }
+    void setRecoveryTurn(float) { tc.resetDepthGain(); recoveryTurn = true; }
     void executeEvadeUntilEdge();
 };
 
@@ -154,5 +167,40 @@ int main() {
             ++comparisons;
         }
     }
+
+    // The new boost is released when steering is taken by parking, either wall, or the blue line.
+    for (int takeover = 0; takeover < 4; ++takeover) {
+        Robot robot;
+        obstacle(robot, 260, 50, 1);
+        robot.executeEvadeUntilEdge();
+        assert(robot.tc.lastDepthGain > 1);
+        if (takeover == 0) {
+            robot.vision.wallDetected = true;
+            robot.vision.wallX = 140; robot.vision.wallY = 100;
+        }
+        if (takeover == 1) robot.validData.left = 50;
+        if (takeover == 2) robot.validData.right = 50;
+        if (takeover == 3) {
+            robot.vision.blueLineDetected = robot.blueLineLastSample = true;
+            robot.blueLineStableAge = 40;
+        }
+        robot.executeEvadeUntilEdge();
+        assert(robot.tc.lastDepthGain == 1);
+    }
+
+#if DEBUG_TANGENT_EVASION
+    assert(Serial.trace.find("mode=ignored") != std::string::npos);
+    assert(Serial.trace.find("gain=") != std::string::npos);
+    assert(Serial.trace.find("requested=") != std::string::npos);
+    assert(Serial.trace.find("applied=") != std::string::npos);
+    const size_t priorSize = Serial.trace.size();
+    Serial.capacity = 0;
+    Robot blockedUsb;
+    obstacle(blockedUsb, 260, 50, 1);
+    testNow += 101;
+    blockedUsb.executeEvadeUntilEdge();
+    assert(Serial.trace.size() == priorSize);
+    assert(blockedUsb.ackermann.angle < 0);
+#endif
     printf("Robot integration: both directions, parking, stale inputs and %u mirrored PD steps passed\n", comparisons);
 }

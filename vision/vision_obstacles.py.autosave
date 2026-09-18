@@ -2,12 +2,12 @@ import csi
 import math
 import pyb
 import time
-import mjpeg
+
 from machine import UART
 
 
 OBSTACLE_THRESHOLDS = [
-    (0, 38, 9, 79, 20, 127),  # Red
+    (0, 35, 10, 79, 20, 127),  # Red
     (15, 48, -128, -14, 7, 127)  # Green
 ]
 
@@ -16,15 +16,17 @@ PARKING_WALL_THRESHOLDS = [
 ]
 
 BLUE_LINE_THRESHOLD = [
-    (23, 38, -10, 127, -13, 6),
-    (45, 59, 6, 50, -128, 127)  # Blue
+    (26, 40, -18, 6, -18, 7),  # Blue
+    (45, 59, 6, 50, -128, 127) 
 ]
 
 BLACK_WALL_THRESHOLD = [(0, 21, -128, 38, -9, 127)]  # Calibrate for black walls
-BLACK_WALL_ROI = (0, 30, 320, 70)  # Nearby wall region; project toward the pillars
-WALL_FLOOR_REFERENCE = (160, 4)  # Nearby floor point in crop-local coordinates
-MIN_WALL_LINE_LENGTH = 206
-MIN_WALL_LINE_HEIGHT = 10
+BLACK_WALL_ROI = (10, 10, 10, 10)
+LEFT_BLACK_WALL_ROI = (160, 30, 160, 80)  # Nearby wall region; project toward the pillars
+RIGHT_BLACK_WALL_ROI = (0, 30, 160, 80)
+WALL_FLOOR_REFERENCE = (160, 4)  # Full-image X; Y relative to the wall crop
+MIN_WALL_LINE_LENGTH = 10
+MIN_WALL_LINE_HEIGHT = 8
 WALL_SAMPLE_DISTANCE = 4
 WALL_BOUNDARY_MARGIN = 6  # Pixel tolerance, not distance from the robot
 WALL_HOLD_MS = 1000  # Keep each wall after losing it; 0 disables retention
@@ -40,7 +42,7 @@ NOT_FOUND_X = 250
 NOT_FOUND_Y = 250
 
 DETECTION_ROI = (10, 30, 300, 85)
-NARROW_DETECTION_ROI = (70, 30, 190, 95)
+NARROW_DETECTION_ROI = (85, 30, 150, 95)
 BLUE_DETECTION_ROI = (0, 12, 320, 38)
 
 MIN_OBSTACLE_PIXELS = 40
@@ -53,7 +55,7 @@ MIN_LINE_AREA = 40
 MIN_OBSTACLE_ASPECT_RATIO = 0.5
 MIN_WALL_ASPECT_RATIO = 1.0
 OBSTACLE_HOLD_MS = 50  # Wait after losing the target before locking onto another
-OBSTACLE_CLEAR_MS = 750  # Report no obstacle after target loss, before acquiring another
+OBSTACLE_CLEAR_MS = 350  # Report no obstacle after target loss, before acquiring another
 OBSTACLE_MATCH_DISTANCE = 70  # Maximum base displacement in pixels
 
 PRINT_DIAGNOSTICS = False
@@ -61,7 +63,7 @@ PRINT_DIAGNOSTICS = False
 
 uart = UART(UART_ID, baudrate=UART_BAUDRATE)
 
-m = mjpeg.Mjpeg('video_openmv.mjpeg')
+
 
 
 def is_vertical_obstacle(blob):
@@ -75,25 +77,29 @@ def is_horizontal_parking_wall(blob):
     return blob.w > blob.h * MIN_WALL_ASPECT_RATIO
 
 
-def find_wall_boundaries(img, color_blobs):
+def find_wall_boundaries(img, color_blobs, wall_roi):
     # White mask pixels represent black walls. Leave the original image unchanged.
-    roi_x, roi_y = BLACK_WALL_ROI[0], BLACK_WALL_ROI[1]
-    mask = img.copy(roi=BLACK_WALL_ROI)
+    roi_x, roi_y = wall_roi[0], wall_roi[1]
+    mask = img.copy(roi=wall_roi)
     mask.binary(BLACK_WALL_THRESHOLD)
     mask.to_grayscale()
-    reference_x, reference_y = WALL_FLOOR_REFERENCE
+    mask_width, mask_height = mask.width(), mask.height()
+    # Keep the nearby floor reference at the image center, inside the chosen crop.
+    reference_x = max(0, min(mask_width - 1, WALL_FLOOR_REFERENCE[0] - roi_x))
+    reference_y = max(0, min(mask_height - 1, WALL_FLOOR_REFERENCE[1]))
     boundaries = [None, None]
     scores = [0, 0]
 
     def is_wall(x, y):
         x, y = int(round(x)), int(round(y))
-        if not (0 <= x < BLACK_WALL_ROI[2] and 0 <= y < BLACK_WALL_ROI[3]):
+        if not (0 <= x < mask_width and 0 <= y < mask_height):
             return None
         for blob in color_blobs:
             if (blob.x <= x + roi_x < blob.x + blob.w and
                     blob.y <= y + roi_y < blob.y + blob.h):
                 return None
-        return mask.get_pixel((x, y)) > 127
+        pixel = mask.get_pixel((x, y))
+        return None if pixel is None else pixel > 127
 
     if is_wall(reference_x, reference_y) is not False:
         return []
@@ -282,12 +288,19 @@ def main():
     while True:
         clock.tick()
         img = camera.snapshot()
-        m.add_frame(img)
         obstacle_blobs = None
         new = reciveRoi()
-        if new and new[0] in (1, 2):
+        if roiUart == 1 or roiUart == 4:
+            OBSTACLE_CLEAR_MS = 750
+        else:
+            OBSTACLE_CLEAR_MS = 350
+        if new and new[0] in (1, 2, 3, 4):
             roiUart = new[0]
         if roiUart == 1:
+            BLACK_WALL_ROI = LEFT_BLACK_WALL_ROI
+        else:
+            BLACK_WALL_ROI = RIGHT_BLACK_WALL_ROI
+        if roiUart == 1 or roiUart == 3 or roiUart == 4:
 
             obstacle_blobs = img.find_blobs(
                 OBSTACLE_THRESHOLDS,
@@ -296,7 +309,7 @@ def main():
                 area_threshold=MIN_OBSTACLE_AREA,
                 merge=False,
             )
-        else:
+        elif roiUart == 2:
             obstacle_blobs = img.find_blobs(
                 OBSTACLE_THRESHOLDS,
                 roi=NARROW_DETECTION_ROI,
@@ -320,21 +333,29 @@ def main():
             merge=True,
         )
         line = largest_valid_blob(line_blobs, lambda blob: True)
-        boundaries = find_wall_boundaries(
-            img,
-            list(obstacle_blobs) + list(wall_blobs) + list(line_blobs),
-        )
-        if WALL_HOLD_MS > 0:
-            now = time.ticks_ms()
-            for boundary in boundaries:
-                # The sign of a distinguishes the image's left and right walls.
-                side = 0 if boundary[0] > 0 else 1
-                saved_boundaries[side] = boundary
-                wall_last_seen[side] = now
-            for side in range(2):
-                if time.ticks_diff(now, wall_last_seen[side]) >= WALL_HOLD_MS:
-                    saved_boundaries[side] = None
-            boundaries = [boundary for boundary in saved_boundaries if boundary is not None]
+        # Command 1 follows Teensy blueLineArmed; 2/3 disable only wall projections.
+        if roiUart == 1:
+            boundaries = find_wall_boundaries(
+                img,
+                list(obstacle_blobs) + list(wall_blobs) + list(line_blobs),
+                BLACK_WALL_ROI,
+            )
+            if WALL_HOLD_MS > 0:
+                now = time.ticks_ms()
+                for boundary in boundaries:
+                    # The sign of a distinguishes the image's left and right walls.
+                    side = 0 if boundary[0] > 0 else 1
+                    saved_boundaries[side] = boundary
+                    wall_last_seen[side] = now
+                for side in range(2):
+                    if time.ticks_diff(now, wall_last_seen[side]) >= WALL_HOLD_MS:
+                        saved_boundaries[side] = None
+                boundaries = [boundary for boundary in saved_boundaries if boundary is not None]
+        else:
+            boundaries = []
+            # Do not restore projections captured before or during the corner.
+            saved_boundaries = [None, None]
+            wall_last_seen = [0, 0]
 
         valid_obstacles = [blob for blob in obstacle_blobs
                            if is_obstacle_inside_walls(blob, boundaries)]

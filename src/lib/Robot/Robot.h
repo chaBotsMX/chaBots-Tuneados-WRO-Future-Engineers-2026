@@ -155,7 +155,7 @@ private:
     static constexpr uint16_t BLUE_LINE_FRONT_TARGET_MM = 50;
     static constexpr uint32_t BLUE_LINE_REVERSE_TIME_MS = 3000;
     static constexpr float POST_REVERSE_STRAIGHT_DISTANCE_MM = 30.0f;
-    static constexpr int PARKING_SEARCH_REVERSE_PWM = 70;
+    static constexpr int PARKING_SEARCH_REVERSE_PWM = 50;
     static constexpr uint32_t PARKING_SEARCH_TIMEOUT_MS = 5000;
     static constexpr uint16_t PARKING_SEARCH_REAR_STOP_MM = 100;
     static constexpr int PARKING_DIRECTION_CENTER_MARGIN_PX = 5;
@@ -197,6 +197,8 @@ private:
     elapsedMillis blueLineForwardTimeOut;
     elapsedMillis roiChangeTimer;
     elapsedMillis parkingSearchAge;
+    elapsedMillis wallFilter;
+    elapsedMillis finishMove;
     uint32_t parkingDirectionLastFrameMs = 0;
     uint8_t parkingDirectionSamples = 0;
     DIRECTIONS parkingDirectionCandidate = DIRECTIONS::COUNTERCLOCKWISE;
@@ -210,7 +212,7 @@ private:
     OpenDirectionMonitor openDirectionMonitor;
     bool blueLineArmed = true;
     bool blueLineLastSample = false;
-
+    bool shouldHaveFilter = true;
     OpenMVData vision;
 
     void changeTask(TASK newTask);

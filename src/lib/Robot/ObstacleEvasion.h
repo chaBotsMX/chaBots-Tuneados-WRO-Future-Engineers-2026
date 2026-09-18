@@ -8,9 +8,10 @@ namespace ObstacleEvasion {
 
 constexpr uint8_t RED = 1;
 constexpr uint8_t GREEN = 2;
-constexpr float MAX_PASS_HEADING_ERROR_DEG = 15.0f;
-constexpr float PARKING_ACTIVATION_ANGLE_DEG = 15.0f;
-constexpr float PARKING_STEERING_ANGLE_DEG = 15.0f;
+constexpr float MAX_PASS_HEADING_ERROR_DEG = 30.0f;
+constexpr float PREVIOUS_SECTION_IGNORE_ANGLE_DEG = 45.0f;
+constexpr float PARKING_ACTIVATION_ANGLE_DEG = 30.0f;
+constexpr float PARKING_STEERING_ANGLE_DEG = 30.0f;
 
 inline bool validPosition(uint16_t x, uint16_t y) {
     return x < VISION_WIDTH && y < VISION_HEIGHT;

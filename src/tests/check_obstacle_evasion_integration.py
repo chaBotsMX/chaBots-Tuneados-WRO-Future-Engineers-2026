@@ -1,12 +1,16 @@
 """Run the real evasion branch and tangential controller with simulated sensor inputs."""
 
 from pathlib import Path
+import argparse
 import re
 import subprocess
 import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--suite", choices=["all", "evasion", "parking", "depth"], default="all")
+suite = parser.parse_args().suite
 source = (ROOT / "lib/Robot/Robot.cpp").read_text()
 header = (ROOT / "lib/Robot/Robot.h").read_text()
 start = source.index("void Robot::executeEvadeUntilEdge()")
@@ -50,10 +54,21 @@ public:
     elapsedMillis& operator=(uint32_t value) { start = testNow - value; return *this; }
 };
 """)
-    for test in ["obstacle_evasion_integration", "parking_direction_integration"]:
-        binary = temporary / test
+    cases = [
+        ("obstacle_evasion_integration", []),
+        ("parking_direction_integration", []),
+        ("tangential_depth_gain_test", []),
+        ("tangential_depth_gain_test", ["-DTAN_EVASION_DEPTH_GAIN_MAX=1.0f", "-DEXPECT_BASELINE_ONLY"]),
+        ("tangential_depth_gain_test", ["-DTAN_EVASION_DEPTH_FULL_Y_PX=90.0f", "-DEXPECT_BASELINE_ONLY"]),
+        ("obstacle_evasion_integration", ["-DDEBUG_TANGENT_EVASION=1"]),
+    ]
+    for index, (test, flags) in enumerate(cases):
+        group = "depth" if test == "tangential_depth_gain_test" else "parking" if test == "parking_direction_integration" else "evasion"
+        if suite != "all" and suite != group:
+            continue
+        binary = temporary / (test + str(index))
         subprocess.run([
-            "c++", "-std=c++11", "-Wno-macro-redefined",
+            "c++", "-std=c++11", "-Wno-macro-redefined", *flags,
             "-I" + str(temporary), "-I" + str(ROOT / "include"),
             "-I" + str(ROOT / "lib/Robot"), "-I" + str(ROOT / "lib/TrajectoryController"),
             str(ROOT / "tests" / (test + ".cpp")),

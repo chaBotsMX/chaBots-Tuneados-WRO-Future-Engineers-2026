@@ -78,10 +78,29 @@ constexpr SpeedControlConfig OPEN_CRUISE_SPEED_CONTROL = {
 #define TAN_EVASION_ACTIVATION_DISTANCE_PX 200
 #define TAN_EVASION_FULL_EVASION_DISTANCE_PX 180
 #define TAN_EVASION_ORIENTATION_GAIN 1.0f // Gain for orientation error in tangent evasion
-#define TAN_EVASION_EVASION_GAIN 1.85f // Gain for evasion
-#define TAN_EVASION_KP 0.50f // Proportional gain for PD
+#define TAN_EVASION_EVASION_GAIN 2.3f // Gain for evasion
+#define TAN_EVASION_KP 0.75f // Proportional gain for PD
 #define TAN_EVASION_KD 0.02f // Derivative gain for PD
 #define TAN_EVASION_DERIVATIVE_FILTER 0.20f // Derivative filter
+
+// Rotated camera: smaller base Y means nearer. Multiplier 1 restores the old controller.
+#ifndef TAN_EVASION_DEPTH_START_Y_PX
+#define TAN_EVASION_DEPTH_START_Y_PX 90.0f
+#endif
+#ifndef TAN_EVASION_DEPTH_FULL_Y_PX
+#define TAN_EVASION_DEPTH_FULL_Y_PX 70.0f
+#endif
+#ifndef TAN_EVASION_DEPTH_GAIN_MAX
+#define TAN_EVASION_DEPTH_GAIN_MAX 5.0f
+#endif
+#ifndef TAN_EVASION_DEPTH_SMOOTH_MS
+#define TAN_EVASION_DEPTH_SMOOTH_MS 30.0f
+#endif
+
+// Optional USB trace: Y, color, validity, control mode, gain and requested/applied steering.
+#ifndef DEBUG_TANGENT_EVASION
+#define DEBUG_TANGENT_EVASION 0
+#endif
 
 // Obstacle Controls
 #define OBSTACLES_PWM_DRIVE -50 // Standar Drive PWM
@@ -89,6 +108,7 @@ constexpr SpeedControlConfig OPEN_CRUISE_SPEED_CONTROL = {
 #define SIDE_WALLS_ACTIVATION_DISTANCE_MM 150 // Distance to activate tangent evasion maneuver
 #define NO_OBSTACLE_IMU_GAIN 3.0f
 #define OBSTACLE_CLOSE_RECOVERY_DISTANCE_PX 87 // Image-space distance that starts recovery
+#define FINAL_OBSTACLE_DRIVE -70
 
 // SIDE WALLS CONTROLS
 #define SIDE_WALLS_ACTIVATION_DISTANCE_MM 100 // Distance to activate tangent evasion

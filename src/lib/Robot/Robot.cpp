@@ -157,6 +157,9 @@ void Robot::refreshDebugDisplay(){
 }
 
 void Robot::printData(){
+#if DEBUG_TANGENT_EVASION
+    return; // Use the structured evasion trace instead of the per-loop X print.
+#endif
    /* Serial.print("validData { front: ");
     Serial.print(validData.front);
     Serial.print(", left: ");
@@ -474,18 +477,28 @@ void Robot::setOpenEnding(){
 void Robot::executeTaskObstacles(){
     // Boolean to finish robot movement
     if(finish == true){
-        move.driveAtPWM(0);
+        tc.resetDepthGain();
+        move.controller.brake();
         return;
     }
-
-    roiChangeTimer > 212 ? CAM_SERIAL.write(1) : CAM_SERIAL.write(2);
-
+    if(wallFilter > 2000 && shouldHaveFilter){
+        if(direction == DIRECTIONS::CLOCKWISE){
+            CAM_SERIAL.write(4);
+        }
+        else{
+            CAM_SERIAL.write(1); 
+        }
+    } 
+    else{
+        roiChangeTimer > 750 ? CAM_SERIAL.write(3) : CAM_SERIAL.write(2);
+    }
     if(taskStatus == TASK::UNDEFINED){
         obstacleDirectionKnown = false;
         parkingDirectionSamples = 0;
         // Require new packets after starting, not an image saved before the button.
         parkingDirectionLastFrameMs = vision.receivedAtMs;
         parkingSearchAge = 0;
+        wallFilter = 0;
         changeTask(TASK::DECIDE_DIR_OBSTACLES);
     }
     if(taskStatus == TASK::DECIDE_DIR_OBSTACLES){
@@ -585,6 +598,7 @@ void Robot::exceuteRecoveryTurn(){
 }
 
 void Robot::setRecoveryTurn(float steeringTarget){
+    tc.resetDepthGain();
     elapsedMillis WTF;
     recoveryTurn = true;
     recoveryAngle = -steeringTarget;
@@ -628,10 +642,30 @@ void Robot::executeEvadeUntilEdge(){
            distanceSinceTurnMm >= BLUE_LINE_REARM_DISTANCE_MM){
             blueLineArmed = true;
         }
+
+        if(direction == DIRECTIONS::COUNTERCLOCKWISE && validData.right < 400){
+            shouldHaveFilter = false;
+        }
+        else if(direction == DIRECTIONS::CLOCKWISE && validData.left < 400){
+            shouldHaveFilter = false;
+        }  
+        else{
+            shouldHaveFilter = true;
+        }
+        const float obstacleAngle = validObstacle
+            ? degrees(atan2f(vision.obstacleX - VISION_WIDTH/2, vision.obstacleY))
+            : 0.0f;
+        // Rotated camera: positive bearing is physical left. IMU error is target - yaw,
+        // so subtract it to express the obstacle bearing relative to the new section.
+        const float obstacleSectionAngle = wrap180(obstacleAngle - imuError);
+        const bool previousSectionObstacle = validObstacle && !blueLineArmed &&
+            (direction == DIRECTIONS::COUNTERCLOCKWISE
+                ? obstacleSectionAngle > ObstacleEvasion::PREVIOUS_SECTION_IGNORE_ANGLE_DEG
+                : obstacleSectionAngle < -ObstacleEvasion::PREVIOUS_SECTION_IGNORE_ANGLE_DEG);
         const bool correctSide = validObstacle && ObstacleEvasion::canIgnoreObstacle(
             vision.obstacleX, vision.obstacleY, vision.obstacleColor,
             imuError, TAN_EVASION_SECURITY_RADIUS_PX);
-        const bool shouldEvade = validObstacle && !correctSide;
+        const bool shouldEvade = validObstacle && !correctSide && !previousSectionObstacle;
 
         const float parkingSteering = cameraDataFresh && vision.wallDetected
             ? ObstacleEvasion::parkingSteering(vision.wallX, vision.wallY,
@@ -639,31 +673,40 @@ void Robot::executeEvadeUntilEdge(){
             : 0.0f;
         float steeringTarget = imuError * NO_OBSTACLE_IMU_GAIN;
 
-        Serial.print(shouldEvade);
         if(parkingSteering != 0.0f){
+            tc.resetDepthGain();
             steeringTarget = parkingSteering;
         }
         else if(validData.left < SIDE_WALLS_ACTIVATION_DISTANCE_MM){
+            tc.resetDepthGain();
             steeringTarget = -SIDE_WALLS_STEERING_ANGLE_DEG;
         }
         else if(validData.right < SIDE_WALLS_ACTIVATION_DISTANCE_MM){
+            tc.resetDepthGain();
             steeringTarget = SIDE_WALLS_STEERING_ANGLE_DEG;
         }
         else if(shouldEvade){
             float distanceToObstacle = sqrtf((pow(vision.obstacleX - 160,2))+(pow(vision.obstacleY,2)));
             
-            float obstacleAngle =
-                degrees(atan2f(vision.obstacleX - VISION_WIDTH/2,vision.obstacleY));
-
             float evasionDirection =
                 vision.obstacleColor == GREEN_OBSTACLE ? 1.0f : -1.0f;
-                steeringTarget = tc.tangentEvasion(
+            float output = tc.tangentEvasion(
                     imuError,
                     evasionDirection,
                     obstacleAngle,
                     TAN_EVASION_SECURITY_RADIUS_PX,
-                    distanceToObstacle
+                    distanceToObstacle,
+                    vision.obstacleY
             );
+            if(validData.right < 300 && direction == DIRECTIONS::CLOCKWISE && output < 0){
+                steeringTarget = steeringTarget;
+            }
+            else if(validData.left < 300 && direction == DIRECTIONS::COUNTERCLOCKWISE && output > 0){
+                steeringTarget = steeringTarget;                
+            }
+            else{
+                steeringTarget = output;
+            }
             if(distanceToObstacle < OBSTACLE_CLOSE_RECOVERY_DISTANCE_PX){
                 setRecoveryTurn(steeringTarget);
             }
@@ -686,10 +729,10 @@ void Robot::setEvadeUntilEdge(){
 void Robot::executeApproachBlueLine(){
     float steeringTarget = imu.getError();
     move.driveAtPWM(OBSTACLE_DRIVE_PWM);
-    if(validData.left < 300){
+    if(validData.left < 300 && validData.right > 300){
         steeringTarget = -SIDE_WALLS_STEERING_ANGLE_DEG;
     }
-    else if(validData.right < 300){
+    else if(validData.right < 300 && validData.left > 300){
         steeringTarget = SIDE_WALLS_STEERING_ANGLE_DEG;
     }
     if(validData.front < BLUE_LINE_FRONT_TARGET_MM || blueLineForwardTimeOut > 3500){
@@ -699,6 +742,7 @@ void Robot::executeApproachBlueLine(){
 }
 
 void Robot::setApproachBlueLine(){
+    tc.resetDepthGain();
     blueLineArmed = false;
     blueLineStableAge = 0;
     lapCount++;
@@ -718,6 +762,14 @@ void Robot::executeReverseAfterBlueLine(){
 }
 
 void Robot::setReverseAfterBlueLine(){
+    if(direction == DIRECTIONS::CLOCKWISE){
+        move.driveAtPWM(65);
+        delay(200);
+    }
+    else{
+        move.driveAtPWM(65);
+        delay(500);
+    }  
     setImuSetPoint();
     blueLineReverseAge = 0;
     changeTask(TASK::REVERSE_AFTER_BLUE_LINE);
@@ -725,8 +777,13 @@ void Robot::setReverseAfterBlueLine(){
 
 void Robot::executeForwardAfterReverse(){
     ackermann.setSteeringAngle(imu.getError());
-    move.driveAtPWM(OBSTACLE_DRIVE_PWM);
 
+    if(lapCount == 12){
+        move.driveAtPWM(FINAL_OBSTACLE_DRIVE);   
+    }
+    else{
+        move.driveAtPWM(OBSTACLE_DRIVE_PWM);
+    }
     const float forwardDistanceMm =
         fabsf(move.controller.getDistanceMM());
 
@@ -735,7 +792,10 @@ void Robot::executeForwardAfterReverse(){
         roiChangeTimer = 0;
 
     }
-    else if(forwardDistanceMm >= PARKING_DISTANCE_MM){
+    else if(forwardDistanceMm >= PARKING_DISTANCE_MM && direction == DIRECTIONS::COUNTERCLOCKWISE){
+        setObstaclesEnding();
+    }
+    else if(forwardDistanceMm >= 1300 && direction == DIRECTIONS::CLOCKWISE){
         setObstaclesEnding();
     }
 }
@@ -747,24 +807,42 @@ void Robot::setForwardAfterReverse(){
     blueLineLastSample = vision.blueLineDetected;
     changeTask(TASK::FORWARD_AFTER_REVERSE);
     move.driveAtPWM(OBSTACLE_DRIVE_PWM);
+    wallFilter = 0;
 }
 
 void Robot::executeObstaclesEnding(){
-    if(imu.getError() < 0.1f && imu.getError() > -0.1f){
-        move.driveAtPWM(0);
-        delay(1500);
-        move.driveAtPWM(70);
-        delay(3000);
-        finish = true;
+    if(direction == DIRECTIONS::COUNTERCLOCKWISE){
+        if(imu.getError() < 0.1f && imu.getError() > -0.1f || finishMove > 5000){
+            move.driveAtPWM(0);
+            delay(1500);
+            move.driveAtPWM(70);
+            delay(3000);
+            finish = true;
 
+        }
+        else{
+            ackermann.setSteeringAngle(imu.getError() * 2.0);
+            move.driveAtPWM(FINAL_OBSTACLE_DRIVE);
+        }
     }
     else{
-        ackermann.setSteeringAngle(imu.getError() * 2.0);
-        move.driveAtPWM(-70);
+        if(imu.getError() < 0.1f && imu.getError() > -0.1f || finishMove > 5000){
+            move.driveAtPWM(70);
+            delay(1500);   
+            move.driveAtPWM(0);
+            delay(1500);
+            finish = true;
+
+        }
+        else{
+            ackermann.setSteeringAngle((imu.getError() * 2.0) * -1);
+            move.driveAtPWM(-FINAL_OBSTACLE_DRIVE);
+        }
     }
 }
 
 void Robot::setObstaclesEnding(){
     setImuSetPoint();
     changeTask(TASK::OBSTACLES_ENDING);
+    finishMove = 0;
 }

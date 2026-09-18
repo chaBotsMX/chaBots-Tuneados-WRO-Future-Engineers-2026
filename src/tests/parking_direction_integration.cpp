@@ -24,7 +24,7 @@ struct Robot {
         int pwm = 0;
         void driveAtPWM(int value) { pwm = value; }
     } move;
-    struct TC { void resetTangentEvasion(float) {} } tc;
+    struct TC { void resetTangentEvasion(float) {} void resetDepthGain() {} } tc;
     struct UI { void buzzSound(int) {} } ui;
     SensorData validData;
     OpenMVData vision;
