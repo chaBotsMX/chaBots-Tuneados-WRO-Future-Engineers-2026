@@ -21,14 +21,14 @@
 #define ENCB        8
 
 // max pwm to prevent overheating the motor, can be adjusted based on testing.
-#define MAX_PWM 250
+#define MAX_PWM 254
 
 // number of ticks that euals one revolution of the motor shaft, obtained from pololu datasheet.
 #define CPR_PER_SHAFT_REVOLUTION 979.6128f
 
 // maximum revolutions per second.
 #define MAX_RPS 8.3333f
-
+  
 // Distance per revoliution in cm, obtained from measurements of the wheel diameter.
 #define DISTANCE_PER_REVOLUTION 13.037f   // cm
 

@@ -7,26 +7,32 @@ from machine import UART
 
 
 OBSTACLE_THRESHOLDS = [
-    (0, 38, 9, 79, 20, 127),  # Red
-    (15, 48, -128, -14, 7, 127)  # Green
+    (24, 42, 18, 48, 9, 35),  # Red
+    (15, 48, -128, -10, 7, 127)  # Green
 ]
 
 PARKING_WALL_THRESHOLDS = [
-    (0, 36, 9, 79, -91, 9)    # Magenta
+    (31, 38, 4, 28, -1, 20)   # Magenta
 ]
 
 BLUE_LINE_THRESHOLD = [
-    (23, 38, -10, 127, -13, 6),
-    (45, 59, 6, 50, -128, 127)  # Blue
+    (20, 46, 1, 41, -78, -9),  # Blue
+    (47, 64, 19, 44, 21, 73)  # Orange
 ]
 
-BLACK_WALL_THRESHOLD = [(0, 21, -128, 38, -9, 127)]  # Calibrate for black walls
+YELLOW_ZONE_TRESHOLD = [
+    (20, 46, 1, 41, -78, -9),  # Yellow
+]
+
+YELLOW_DETECTION_ROI = (0, 10, 160, 50)
+
+BLACK_WALL_THRESHOLD = [(0, 27, -10, 8, 0, 22)]  # Calibrate for black walls
 BLACK_WALL_ROI = (10, 10, 10, 10)
-LEFT_BLACK_WALL_ROI = (160, 30, 160, 70)  # Nearby wall region; project toward the pillars
-RIGHT_BLACK_WALL_ROI = (0, 30, 160, 70)
+LEFT_BLACK_WALL_ROI = (160, 30, 160, 80)  # Nearby wall region; project toward the pillars
+RIGHT_BLACK_WALL_ROI = (0, 30, 160, 80)
 WALL_FLOOR_REFERENCE = (160, 4)  # Full-image X; Y relative to the wall crop
 MIN_WALL_LINE_LENGTH = 20
-MIN_WALL_LINE_HEIGHT = 12
+MIN_WALL_LINE_HEIGHT = 20
 WALL_SAMPLE_DISTANCE = 4
 WALL_BOUNDARY_MARGIN = 6  # Pixel tolerance, not distance from the robot
 WALL_HOLD_MS = 1000  # Keep each wall after losing it; 0 disables retention
@@ -36,14 +42,14 @@ UART_BAUDRATE = 1000000
 
 START_BYTE_HIGH = 0xAA
 START_BYTE_LOW = 0x55
-PACKET_SIZE = 14
+PACKET_SIZE = 18
 
 NOT_FOUND_X = 250
 NOT_FOUND_Y = 250
 
-DETECTION_ROI = (10, 30, 300, 85)
-NARROW_DETECTION_ROI = (80, 30, 160, 95)
-BLUE_DETECTION_ROI = (0, 12, 320, 38)
+DETECTION_ROI = (11, 30, 298, 85)
+NARROW_DETECTION_ROI = (85, 30, 150, 95)
+BLUE_DETECTION_ROI = (0, 12, 320, 43)
 
 MIN_OBSTACLE_PIXELS = 40
 MIN_OBSTACLE_AREA = 40
@@ -62,8 +68,6 @@ PRINT_DIAGNOSTICS = False
 
 
 uart = UART(UART_ID, baudrate=UART_BAUDRATE)
-
-
 
 
 def is_vertical_obstacle(blob):
@@ -214,6 +218,7 @@ def update_packet(
     obstacle_position,
     wall_position,
     blue_line_bottom_y,
+    yellow_position,
     flags,
 ):
     packet[0] = START_BYTE_HIGH
@@ -224,12 +229,14 @@ def update_packet(
     put_uint16_be(packet, 6, wall_position[0])
     put_uint16_be(packet, 8, wall_position[1])
     put_uint16_be(packet, 10, blue_line_bottom_y)
-    packet[12] = flags & 0xFF
+    put_uint16_be(packet, 12, yellow_position[0])
+    put_uint16_be(packet, 14, yellow_position[1])
+    packet[16] = flags & 0xFF
 
     checksum = 0
-    for index in range(2, 13):
+    for index in range(2, 17):
         checksum ^= packet[index]
-    packet[13] = checksum
+    packet[17] = checksum
 
 
 def configure_camera():
@@ -238,11 +245,11 @@ def configure_camera():
     camera.pixformat(csi.RGB565)
     camera.framesize(csi.QVGA)
     camera.framerate(120)
-    camera.auto_gain(False, gain_db=25.0)
+    camera.auto_gain(False, gain_db=12.0)
     camera.snapshot()
     camera.auto_exposure(False, exposure_us=6000)
     camera.snapshot()
-    camera.auto_whitebal(False, rgb_gain_db=(25, 22, 27))
+    camera.auto_whitebal(False, rgb_gain_db=(24, 21, 27))
     camera.brightness(0)
     camera.saturation(0)
     camera.contrast(0)
@@ -291,7 +298,7 @@ def main():
         obstacle_blobs = None
         new = reciveRoi()
         if roiUart == 1 or roiUart == 4:
-            OBSTACLE_CLEAR_MS = 350
+            OBSTACLE_CLEAR_MS = 550
         else:
             OBSTACLE_CLEAR_MS = 350
         if new and new[0] in (1, 2, 3, 4):
@@ -332,9 +339,17 @@ def main():
             area_threshold=MIN_LINE_AREA,
             merge=True,
         )
+
+        yellow_blobs = img.find_blobs(
+            YELLOW_ZONE_TRESHOLD,
+            roi=YELLOW_DETECTION_ROI,
+            pixels_threshold=20,
+            area_threshold=20,
+            merge=True,
+        )
         line = largest_valid_blob(line_blobs, lambda blob: True)
-        # Command 1 follows Teensy blueLineArmed; 2/3 disable only wall projections.
-        if roiUart == 1:
+        # Commands 1/4 filter the left/right wall; 2/3 disable wall projections.
+        if roiUart in (1, 4):
             boundaries = find_wall_boundaries(
                 img,
                 list(obstacle_blobs) + list(wall_blobs) + list(line_blobs),
@@ -398,6 +413,7 @@ def main():
         obstacle_position = [NOT_FOUND_X, NOT_FOUND_Y]
         wall_position = [NOT_FOUND_X, NOT_FOUND_Y]
         blue_line_bottom_y = NOT_FOUND_Y
+        yellow_position = [NOT_FOUND_X, NOT_FOUND_Y]
         flags = 0
 
         if line is not None:
@@ -462,7 +478,18 @@ def main():
                 "PARKING WALL",
                 color=(255, 0, 255),
             )
-
+        yellow = largest_valid_blob(yellow_blobs) if yellow_blobs else None
+        if yellow is not None:
+            yellow_position[0] = yellow.cx
+            yellow_position[1] = max(
+                0,
+                int(yellow.cy - yellow.h / 2),
+            )
+        img.draw_rectangle(
+            YELLOW_DETECTION_ROI,
+            color=(200, 100, 100),
+            thickness=3,
+        )
         img.draw_rectangle(
             DETECTION_ROI,
             color=(255, 0, 0),
@@ -499,6 +526,7 @@ def main():
             obstacle_position,
             wall_position,
             blue_line_bottom_y,
+            yellow_position,
             flags,
         )
         uart.write(packet)

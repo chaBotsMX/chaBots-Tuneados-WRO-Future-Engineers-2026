@@ -60,9 +60,8 @@ void Robot::updateCam(){
 }
 
 void Robot::updateCamOpen(bool rememberLine){
-    camera.updateOpen(CAM_SERIAL,vision);
-    if(rememberLine && lineId == 0 && vision.lineId != 3 && vision.lineDetected){
-        lineId = vision.lineId;        
+    if(!camera.updateOpen(CAM_SERIAL,vision)){
+        vision.lineDetected = false;
     }
 }
 
@@ -74,6 +73,7 @@ bool Robot::updateSensors(){
     hasFreshData |= updateSide(TOF4Walls::BACK, data.back, validData.back, backDataAge);
     const bool leftFresh = updateSide(TOF4Walls::LEFT, data.left, validData.left, leftDataAge);
     const bool rightFresh = updateSide(TOF4Walls::RIGHT, data.right, validData.right, rightDataAge);
+    parkingRightSamplePending = rightFresh;
     hasFreshData |= leftFresh | rightFresh;
 
     invalidateStaleSensorData();
@@ -152,7 +152,7 @@ void Robot::refreshDebugDisplay(){
     const bool cameraUartOk = vision.receivedAtMs != 0 &&
         static_cast<uint32_t>(millis() - vision.receivedAtMs) <= CAMERA_DATA_TIMEOUT_MS;
     ui.showDebug(state,
-                 data.front, data.left, data.right,
+                 vision.lineId, data.left, data.right,
                  imu.getYaw(), imu.setPoint, cameraUartOk);
 }
 
@@ -208,6 +208,29 @@ void Robot::begin(){
     this->imu.setSetPoint(0); 
 }
 
+void Robot::decideDirParking(){
+    if (obstacleDirectionKnown || !parkingRightSamplePending) {
+        return;
+    }
+    // Consume each sensor frame once, even when it contains an invalid distance.
+    parkingRightSamplePending = false;
+    if (validData.right >= PARKING_DIRECTION_MAX_DISTANCE_MM) {
+        return;
+    }
+
+    parkingRightDistanceSum += validData.right;
+    if (++parkingRightSampleCount < PARKING_DIRECTION_TOF_SAMPLES) {
+        return;
+    }
+
+    const float averageMm = static_cast<float>(parkingRightDistanceSum) /
+                            parkingRightSampleCount;
+    direction = averageMm < 200.0f
+        ? DIRECTIONS::COUNTERCLOCKWISE
+        : DIRECTIONS::CLOCKWISE;
+    obstacleDirectionKnown = true;
+
+}
 void Robot::decideDir(){
     if (taskStatus == TASK::GET_CLOSE_TO_EDGE) {
         const auto gap = openDirectionMonitor.gap(millis());
@@ -262,6 +285,7 @@ const char* Robot::taskName(TASK task){
         case TASK::OPEN_TURN:          return "OPEN_TURN";
         case TASK::OPEN_ENDING:        return "OPEN_END";
         case TASK::FINISHED:           return "FINISHED";
+        case TASK::DECIDE_DIR_PARKING: return "PARKING_DIR";
         case TASK::DECIDE_DIR_OBSTACLES:return "FIND_PARKING";
         case TASK::EVADE_UNTIL_EDGE:   return "EVADE";
         case TASK::APPROACH_BLUE_LINE: return "APPROACH_LINE";
@@ -313,6 +337,12 @@ void Robot::executeTaskOpen(){
     else if(taskStatus == TASK::FOLLOW_WALL){
         executeFollowWall();
     }
+    else if(taskStatus == TASK::AFTER_CROSS){
+        executeAfterCross();
+    }
+    else if(taskStatus == TASK::CROSS_OPEN){
+        executeStopCross();
+    }
     else if(taskStatus == TASK::FOLLOW_UNTIL_EDGE){
         executeFollowUntilEdge();
     }
@@ -320,6 +350,7 @@ void Robot::executeTaskOpen(){
         executeOpenEnding();
     }
 }
+
 
 void Robot::executeGoStraightToEdge(){
     float error = imu.getError();
@@ -366,6 +397,10 @@ void Robot::executeFollowWall(){
         Serial.print("stanleyTheta: ");
         Serial.println(stanleyTheta);
     }
+    if(vision.lineId == 1 && doCross|| vision.lineId == 2 && doCross){
+        setStopCross();
+        return;
+    }
     if(move.updateCM()){
         setFollowUntilEdge();
     }
@@ -392,7 +427,7 @@ void Robot::executeFollowUntilEdge(){
     }
     if(frontDistance < 250 && innerWall > 2000){
         move.driveAtPWM(FOLLOW_WALL_RECOVERY_PWM);
-        delay(500);
+        delay(1000);
         move.controller.brake();
         delay(100);
         move.driveAtPWM(0);
@@ -402,7 +437,7 @@ void Robot::executeFollowUntilEdge(){
         setImuSetPoint();
         return;
     }
-    else if(frontDistance < TURN_MAX_DISTANCE_MM && frontDistance > TURN_MIN_DISTANCE_MM && innerWall > INNER_WALL_MIN_DISTANCE_TO_TURN_MM){
+    else if(frontDistance < TURN_MAX_DISTANCE_MM && frontDistance > TURN_MIN_DISTANCE_MM && innerWall > 1000){
         setOpenTurn();
         setImuSetPoint();
         return;
@@ -447,16 +482,52 @@ void Robot::setOpenTurn(){
     changeTask(TASK::OPEN_TURN);
 }
 
+void Robot::executeStopCross(){
+    if (stopCross < 3000){
+        move.smoothBrake(1000);
+    }
+    else{
+        setAfterCross();
+    }
+}
 
-void Robot::executeOpenEnding(){
+void Robot::setStopCross(){
+    changeTask(TASK::CROSS_OPEN);
+    stopCross = 0;
+}
+void Robot::executeAfterCross(){
     if(direction == DIRECTIONS::CLOCKWISE){
-        float stanleyTheta = tc.stanley(wallDistance - validData.left,-imu.getError(),float(move.getCurrentSpeed()), 0.002f, 1.0f);
+        float stanleyTheta = tc.stanley(wallDistance - validData.left,-imu.getError(),float(move.getCurrentSpeed()), 0.005f, 1.0f);
         ackermann.setSteeringAngle(-stanleyTheta);
         Serial.print("stanleyTheta: ");
         Serial.println(stanleyTheta);
     }
     else{
-        float stanleyTheta = tc.stanley(wallDistance - validData.right,imu.getError(),float(move.getCurrentSpeed()), 0.002f, 1.0f);
+        float stanleyTheta = tc.stanley(wallDistance - validData.right,imu.getError(),float(move.getCurrentSpeed()), 0.005f, 1.0f);
+        ackermann.setSteeringAngle(stanleyTheta);
+        Serial.print("stanleyTheta: ");
+        Serial.println(stanleyTheta);
+    }
+    if(move.updateCM()){
+        setFollowUntilEdge();
+    }
+}
+
+void Robot::setAfterCross(){
+    changeTask(TASK::AFTER_CROSS);
+    stopCross = 0;
+    move.setTask(CROSS_PROFILE);
+}
+
+void Robot::executeOpenEnding(){
+    if(direction == DIRECTIONS::CLOCKWISE){
+        float stanleyTheta = tc.stanley(wallDistance - validData.left,-imu.getError(),float(move.getCurrentSpeed()), 0.0015f, 1.0f);
+        ackermann.setSteeringAngle(-stanleyTheta);
+        Serial.print("stanleyTheta: ");
+        Serial.println(stanleyTheta);
+    }
+    else{
+        float stanleyTheta = tc.stanley(wallDistance - validData.right,imu.getError(),float(move.getCurrentSpeed()), 0.0015f, 1.0f);
         ackermann.setSteeringAngle(stanleyTheta);
         Serial.print("stanleyTheta: ");
         Serial.println(stanleyTheta);
@@ -499,7 +570,18 @@ void Robot::executeTaskObstacles(){
         parkingDirectionLastFrameMs = vision.receivedAtMs;
         parkingSearchAge = 0;
         wallFilter = 0;
-        changeTask(TASK::DECIDE_DIR_OBSTACLES);
+        parkingRightDistanceSum = 0;
+        parkingRightSampleCount = 0;
+        parkingRightSamplePending = false; // Start with frames received after entry.
+        changeTask(TASK::DECIDE_DIR_PARKING);
+    }
+    if(taskStatus == TASK::DECIDE_DIR_PARKING){
+        move.controller.brake();
+        decideDirParking();
+        if(obstacleDirectionKnown){
+            setParkingInit();
+        }
+        return;
     }
     if(taskStatus == TASK::DECIDE_DIR_OBSTACLES){
         decideDirObstacles();
@@ -511,7 +593,10 @@ void Robot::executeTaskObstacles(){
             return;
         }
     }
-    if(taskStatus == TASK::EVADE_UNTIL_EDGE){
+    if (taskStatus == TASK::PARKING_INIT){
+        executeParkingInit();
+    }
+    else if(taskStatus == TASK::EVADE_UNTIL_EDGE){
         executeEvadeUntilEdge();
     }
     else if(taskStatus == TASK::APPROACH_BLUE_LINE){
@@ -728,14 +813,14 @@ void Robot::setEvadeUntilEdge(){
 
 void Robot::executeApproachBlueLine(){
     float steeringTarget = imu.getError();
-    move.driveAtPWM(OBSTACLE_DRIVE_PWM);
-    if(validData.left < 300 && validData.right > 300){
+    move.driveAtPWM(-65);
+    if(validData.left < 300 && validData.right > 250){
         steeringTarget = -SIDE_WALLS_STEERING_ANGLE_DEG;
     }
-    else if(validData.right < 300 && validData.left > 300){
+    else if(validData.right < 300 && validData.left > 250){
         steeringTarget = SIDE_WALLS_STEERING_ANGLE_DEG;
     }
-    if(validData.front < BLUE_LINE_FRONT_TARGET_MM || blueLineForwardTimeOut > 3500){
+    if(validData.front < BLUE_LINE_FRONT_TARGET_MM || blueLineForwardTimeOut > 4000){
         setReverseAfterBlueLine();
     }
     ackermann.setSteeringAngle(steeringTarget);
@@ -753,7 +838,7 @@ void Robot::setApproachBlueLine(){
 
 void Robot::executeReverseAfterBlueLine(){
     ackermann.setSteeringAngle(-imu.getError());
-    move.driveAtPWM(-OBSTACLE_DRIVE_PWM);
+    move.driveAtPWM(70);
 
     if(blueLineReverseAge >= BLUE_LINE_REVERSE_TIME_MS){
         setForwardAfterReverse();
@@ -763,12 +848,12 @@ void Robot::executeReverseAfterBlueLine(){
 
 void Robot::setReverseAfterBlueLine(){
     if(direction == DIRECTIONS::CLOCKWISE){
-        move.driveAtPWM(65);
-        delay(200);
+        move.driveAtPWM(55);
+        delay(10);
     }
     else{
         move.driveAtPWM(65);
-        delay(500);
+        delay(250);
     }  
     setImuSetPoint();
     blueLineReverseAge = 0;
@@ -776,7 +861,7 @@ void Robot::setReverseAfterBlueLine(){
 }
 
 void Robot::executeForwardAfterReverse(){
-    ackermann.setSteeringAngle(imu.getError());
+    ackermann.setSteeringAngle(imu.getError() * 2.0);
 
     if(lapCount == 12){
         move.driveAtPWM(FINAL_OBSTACLE_DRIVE);   
@@ -795,7 +880,7 @@ void Robot::executeForwardAfterReverse(){
     else if(forwardDistanceMm >= PARKING_DISTANCE_MM && direction == DIRECTIONS::COUNTERCLOCKWISE){
         setObstaclesEnding();
     }
-    else if(forwardDistanceMm >= 1300 && direction == DIRECTIONS::CLOCKWISE){
+    else if(forwardDistanceMm >= 1250 && direction == DIRECTIONS::CLOCKWISE){
         setObstaclesEnding();
     }
 }
@@ -845,4 +930,76 @@ void Robot::setObstaclesEnding(){
     setImuSetPoint();
     changeTask(TASK::OBSTACLES_ENDING);
     finishMove = 0;
+}
+
+void Robot::executeParkingInit(){
+    if(direction == DIRECTIONS::CLOCKWISE){
+    if(a == 0){
+    move.turnByCm(5.3,15,-35);
+    a++;
+  }
+  else if (a == 1){
+    move.turnByCm(-5.8,15,35);
+    a++;
+  }
+  else if (a == 2){
+    move.turnByCm(20,20,-35);
+    a++;
+  }
+  else if(a == 3){
+    move.turnByCm(25,25,35);
+    a++;
+  }
+  else if(a == 4){
+    ackermann.setSteeringAngle(-35);
+    delay(1000);
+    a++;
+  }
+  else if(a == 5){
+    move.turnByCm(-13,25,-35);
+    a++;
+  }
+else if(a == 6){
+    move.turnByCm(-5,25,0);
+    a++;
+  }
+  else{
+    setEvadeUntilEdge();
+
+  }
+}
+else{
+    if(a == 0){
+    move.turnByCm(9.7,20,35);
+    a++;
+  }
+  else if(a == 1){
+    move.turnByCm(-5.4,12,-35);
+    a++;
+  }
+  else if(a == 2){
+    move.turnByCm(25,25,35);
+    a++; 
+  }
+  else if(a == 3){
+    move.turnByCm(12,25,-35);
+    a++;
+  }
+  else if(a == 4){
+    move.turnByCm(-35,25,35);
+    a++;
+  }
+  else if(a == 5){
+    move.turnByCm(-13,25,-35);
+    a++;
+  }
+  else{
+    setEvadeUntilEdge();
+  }
+ 
+}
+}
+
+void Robot::setParkingInit(){
+    changeTask(TASK::PARKING_INIT);
 }

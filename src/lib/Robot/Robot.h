@@ -69,7 +69,8 @@ public:
     // Updates ToF data and returns true when at least one side has a new reading.
     bool updateSensors();
     void printData();
-
+    // Consume 10 fresh right-ToF readings below 1000 mm before choosing direction.
+    void decideDirParking();
 
     void steerByStanley(float stanleyWallGain, float stanleyHeadingGain);
 
@@ -143,6 +144,15 @@ public:
     void executeObstaclesEnding();
     void setObstaclesEnding();
 
+    void executeParkingInit();
+    void setParkingInit();
+
+    void executeStopCross();
+    void setStopCross();
+
+    void executeAfterCross();
+    void setAfterCross();
+    OpenMVData vision;
 private:
     static constexpr uint8_t GREEN_OBSTACLE = 2;
 
@@ -160,6 +170,8 @@ private:
     static constexpr uint16_t PARKING_SEARCH_REAR_STOP_MM = 100;
     static constexpr int PARKING_DIRECTION_CENTER_MARGIN_PX = 5;
     static constexpr uint8_t PARKING_DIRECTION_CONFIRM_SAMPLES = 3;
+    static constexpr uint8_t PARKING_DIRECTION_TOF_SAMPLES = 10;
+    static constexpr uint16_t PARKING_DIRECTION_MAX_DISTANCE_MM = 1000;
 
 
     // States shared by both runs; each firmware uses a subset.
@@ -172,21 +184,28 @@ private:
         OPEN_TURN,
         OPEN_ENDING,
         FINISHED,
+        DECIDE_DIR_PARKING,
         DECIDE_DIR_OBSTACLES,
         EVADE_UNTIL_EDGE,
         APPROACH_BLUE_LINE,
         REVERSE_AFTER_BLUE_LINE,
         FORWARD_AFTER_REVERSE,
-        OBSTACLES_ENDING
+        OBSTACLES_ENDING,
+        PARKING_INIT,
+        CROSS_OPEN,
+        AFTER_CROSS
+
     };
 
-    int wallDistance = 300;
+    int wallDistance = 350;
 
     TASK taskStatus = TASK::UNDEFINED;
     TASK previousTaskStatus = TASK::UNDEFINED;
     int lapCount = 0;
     bool finish = false;
-
+    int a = 0;
+    bool doCross = false;
+    elapsedMillis stopCross;
     elapsedMillis frontDataAge;
     elapsedMillis backDataAge;
     elapsedMillis leftDataAge;
@@ -201,6 +220,9 @@ private:
     elapsedMillis finishMove;
     uint32_t parkingDirectionLastFrameMs = 0;
     uint8_t parkingDirectionSamples = 0;
+    uint32_t parkingRightDistanceSum = 0;
+    uint8_t parkingRightSampleCount = 0;
+    bool parkingRightSamplePending = false;
     DIRECTIONS parkingDirectionCandidate = DIRECTIONS::COUNTERCLOCKWISE;
     bool obstacleDirectionKnown = false;
     bool parkingSearchStopped = false;
@@ -213,7 +235,7 @@ private:
     bool blueLineArmed = true;
     bool blueLineLastSample = false;
     bool shouldHaveFilter = true;
-    OpenMVData vision;
+
 
     void changeTask(TASK newTask);
     // Keep the motor stopped and report a boot failure instead of rebooting silently.

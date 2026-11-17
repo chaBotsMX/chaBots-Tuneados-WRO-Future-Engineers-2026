@@ -31,7 +31,7 @@ void setup() {
 
 void loop() {
   robot.imu.update();
-  robot.updateSensors();
+  robot.updateSensors();  
   robot.updateCamOpen();
   robot.printData();
 

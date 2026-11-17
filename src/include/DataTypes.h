@@ -28,6 +28,8 @@ struct OpenMVData {
     uint16_t wallX = 250;
     uint16_t wallY = 250;
     uint16_t blueLineBottomY = 250;
+    uint16_t yellowY = 250;
+    uint16_t yellowX = 250;
     uint8_t obstacleColor = 0;
     uint8_t lineId = 0;
     

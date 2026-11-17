@@ -46,11 +46,11 @@ bool cameraReceiver::update(HardwareSerial &serialPort, OpenMVData &data) {
         packetIndex = 0;
 
         uint8_t calculatedChecksum = 0;
-        for (size_t index = 2; index <= 12; ++index) {
+        for (size_t index = 2; index <= 16; ++index) {
             calculatedChecksum ^= packet[index];
         }
 
-        if (calculatedChecksum != packet[13]) {
+        if (calculatedChecksum != packet[17]) {
             continue;
         }
 
@@ -59,8 +59,10 @@ bool cameraReceiver::update(HardwareSerial &serialPort, OpenMVData &data) {
         data.wallX = readUint16BigEndian(&packet[6]);
         data.wallY = readUint16BigEndian(&packet[8]);
         data.blueLineBottomY = readUint16BigEndian(&packet[10]);
+        data.yellowX = readUint16BigEndian(&packet[12]);
+        data.yellowY = readUint16BigEndian(&packet[14]);
 
-        data.flags = packet[12];
+        data.flags = packet[16];
         data.obstacleDetected = (data.flags & 0x01) != 0;
         data.wallDetected = (data.flags & 0x02) != 0;
         data.blueLineDetected = data.blueLineBottomY != 250;
