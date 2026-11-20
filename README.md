@@ -39,10 +39,22 @@
 
 This repository contains the documentation for **ChaBots'** participation in the **WRO Future Engineers 2026** category. Our robot was designed and built by a team of Mexican students passionate about robotics and education.
 
+## Competition Videos <a name="competition-videos"></a>
+
+Watch Pistonudo complete the Open and Obstacles challenges. Select a preview to open the corresponding video on YouTube.
+
+| Open Challenge | Obstacles Challenge |
+|:---:|:---:|
+| [![Watch the Open Challenge](https://img.youtube.com/vi/oslJ-CmbmxM/hqdefault.jpg)](https://youtu.be/oslJ-CmbmxM) | [![Watch the Obstacles Challenge](https://img.youtube.com/vi/23dmH0szIEk/hqdefault.jpg)](https://youtu.be/23dmH0szIEk) |
+| [▶ Watch Open Challenge](https://youtu.be/oslJ-CmbmxM) | [▶ Watch Obstacles Challenge](https://youtu.be/23dmH0szIEk) |
+
+
 
 
 
 ## 📜 Table of Contents
+
+🎬 [Competition Videos](#competition-videos)
 
 1. 🧑‍💻 [The Team](#the-team)
 2. 🎯 [The Challenge](#the-challenge)
@@ -56,7 +68,7 @@ This repository contains the documentation for **ChaBots'** participation in the
 10. 🧪 [Testing, Validation and Results](#testing-validation)
 11. 🛠️ [Construction, Serviceability and Debugging](#construction-guide)
 12. 💰 [Cost Report](#cost-report)
-13. 📚 [Videos and Resources](#resources)
+13. 📚 [Resources](#resources)
 14. 📋 [Engineering Development Log](#engineering-log)
 15. ©️ [License](#license)
 ---
@@ -132,7 +144,7 @@ I am a Mechanical Engineering student that has been participating in robotics co
 
 
 
-> "No."
+> "I miss her."
 
 
 
@@ -336,7 +348,7 @@ The following table compares some motors we considered. We usually prefer motors
 
 
 
-| Model          | Speed (RPM) | Torque (kg/cm) | Current (A) | Weight (g) |Voltage| Price ($) |
+| Model          | Speed (RPM) | Torque (kg/cm) | Current (A) | Weight (g) |Voltage| Price (USD) |
 |----------------|-------------|----------------|-------------|------------|---|-----------|
 | Maxon DCX19    | 600         | 6.5            | 2.0         | 80         |12V| 500       |
 | Pololu 25D HP 20.4:1   | 480 | 4.8            | 6.0         | 107        | 6V|37.95      |
@@ -470,7 +482,7 @@ Here are some servo options:
 
 
 
-| Model      | Torque (kg/cm)| Current (A) | Size|Weight (g) |Quality| Price ($) |
+| Model      | Torque (kg/cm)| Current (A) | Size|Weight (g) |Quality| Price (USD) |
 |------------|---------------|-------------|-----|------|---|-----------|
 | HS 85MG    | 3             | 1.2         | Small|    21    |Excellent| 40.00      |
 | MG996      |  13           | 1.2         | Really big|    66    | Bad|10.00      |
@@ -579,13 +591,13 @@ During a turn, every wheel follows a circle with a different radius around one i
 
 Ackermann steering approximates the required relationship by arranging the steering arms and tie rods so that the projected wheel axes intersect near the rear axle. For wheelbase (L), front track width (T), and turn radius (R) measured to the vehicle centerline:
 
-$$
+```math
 \tan(\delta_{inside}) = \frac{L}{R - T/2}
-$$
+```
 
-$$
+```math
 \tan(\delta_{outside}) = \frac{L}{R + T/2}
-$$
+```
 
 Therefore, the inside steering angle must always be greater than the outside angle.
 
@@ -606,9 +618,9 @@ The factors we used to reduce unpredictable slip were:
 
 The geometric turning radius depends mainly on wheelbase and steering angle. A simplified bicycle model gives:
 
-$$
+```math
 R \approx \frac{L}{\tan(\delta)}
-$$
+```
 
 A shorter wheelbase or a greater steering angle reduces the theoretical radius. In practice, however, simply commanding a greater angle does not guarantee a tighter turn. Tire scrub, servo backlash, linkage deformation, insufficient torque, and wheel-to-chassis interference can make the real turning radius larger than the calculated value.
 
@@ -1122,21 +1134,21 @@ The BNO085 IMU is powered from the Teensy's 3.3 V output and is therefore not co
 
 Power is expressed in watts:
 
-$$
+```math
 P = V \times I
-$$
+```
 
 Energy stored in the battery is expressed in watt-hours:
 
-$$
-E = V \times Ah
-$$
+```math
+E = V \times Q_{\mathrm{Ah}}
+```
 
 For the 11.1 V, 1000 mAh battery:
 
-$$
-E = 11.1\ V \times 1\ Ah = 11.1\ Wh
-$$
+```math
+E = 11.1\,\mathrm{V} \times 1\,\mathrm{Ah} = 11.1\,\mathrm{Wh}
+```
 
 #### Component Power Budget
 
@@ -1157,23 +1169,23 @@ The motor's 1.5 A value is the expected high-load operating current used for the
 
 The normal estimated current, including the servo's published running current, is:
 
-$$
-I_{5V,normal} = 0.100 + 0.250 + 0.025 + 0.150 + 0.240 = 0.765\ A
-$$
+```math
+I_{5V,normal} = 0.100 + 0.250 + 0.025 + 0.150 + 0.240 = 0.765\,\mathrm{A}
+```
 
-$$
-P_{5V,normal} = 5\ V \times 0.765\ A = 3.825\ W
-$$
+```math
+P_{5V,normal} = 5\,\mathrm{V} \times 0.765\,\mathrm{A} = 3.825\,\mathrm{W}
+```
 
 Using the 1.2 A servo transient as the design condition:
 
-$$
-I_{5V,peak} = 0.100 + 0.250 + 0.025 + 0.150 + 1.200 = 1.725\ A
-$$
+```math
+I_{5V,peak} = 0.100 + 0.250 + 0.025 + 0.150 + 1.200 = 1.725\,\mathrm{A}
+```
 
-$$
-P_{5V,peak} = 5\ V \times 1.725\ A = 8.625\ W
-$$
+```math
+P_{5V,peak} = 5\,\mathrm{V} \times 1.725\,\mathrm{A} = 8.625\,\mathrm{W}
+```
 
 A small additional margin is required for the BNO085 because it is powered through the Teensy's onboard 3.3 V regulator. Therefore, the practical 5 V design budget is approximately **1.73 A and 8.7 W**.
 
@@ -1181,13 +1193,13 @@ The 5 V rail uses a **Pololu D24V50F5** regulator, rated for approximately 5 A. 
 
 Assuming 90% efficiency:
 
-$$
-P_{in,5V} = \frac{8.7\ W}{0.90} \approx 9.67\ W
-$$
+```math
+P_{in,5V} = \frac{8.7\,\mathrm{W}}{0.90} \approx 9.67\,\mathrm{W}
+```
 
-$$
-P_{loss,5V} = 9.67 - 8.7 \approx 0.97\ W
-$$
+```math
+P_{loss,5V} = 9.67 - 8.7 \approx 0.97\,\mathrm{W}
+```
 
 #### 3.3 V ToF Rail
 
@@ -1195,35 +1207,35 @@ Each VL53L8CX module uses approximately 100 mA during typical continuous ranging
 
 For four sensors:
 
-$$
-I_{3.3V,typical} = 4 \times 0.100 = 0.400\ A
-$$
+```math
+I_{3.3V,typical} = 4 \times 0.100 = 0.400\,\mathrm{A}
+```
 
-$$
-P_{3.3V,typical} = 3.3\ V \times 0.400\ A = 1.32\ W
-$$
+```math
+P_{3.3V,typical} = 3.3\,\mathrm{V} \times 0.400\,\mathrm{A} = 1.32\,\mathrm{W}
+```
 
 For the peak design condition:
 
-$$
-I_{3.3V,peak} = 4 \times 0.150 = 0.600\ A
-$$
+```math
+I_{3.3V,peak} = 4 \times 0.150 = 0.600\,\mathrm{A}
+```
 
-$$
-P_{3.3V,peak} = 3.3\ V \times 0.600\ A = 1.98\ W
-$$
+```math
+P_{3.3V,peak} = 3.3\,\mathrm{V} \times 0.600\,\mathrm{A} = 1.98\,\mathrm{W}
+```
 
 The ToF rail uses a **Pololu D24V10F3**, rated for approximately 1 A. A 600 mA peak load uses 60% of its nominal current capacity.
 
 Assuming 87% efficiency:
 
-$$
-P_{in,3.3V} = \frac{1.98\ W}{0.87} \approx 2.28\ W
-$$
+```math
+P_{in,3.3V} = \frac{1.98\,\mathrm{W}}{0.87} \approx 2.28\,\mathrm{W}
+```
 
-$$
-P_{loss,3.3V} = 2.28 - 1.98 \approx 0.30\ W
-$$
+```math
+P_{loss,3.3V} = 2.28 - 1.98 \approx 0.30\,\mathrm{W}
+```
 
 Because the VL53L8CX carrier boards are powered close to their minimum accepted input voltage, the voltage must also be measured directly at the sensor connectors under maximum load to verify that wiring losses do not reduce it excessively.
 
@@ -1233,15 +1245,15 @@ The motor is connected to the 3S battery through the VNH7070AS motor driver.
 
 At the selected 1.5 A design operating current and the battery's nominal voltage:
 
-$$
-P_{motor} = 11.1\ V \times 1.5\ A = 16.65\ W
-$$
+```math
+P_{motor} = 11.1\,\mathrm{V} \times 1.5\,\mathrm{A} = 16.65\,\mathrm{W}
+```
 
 At stall:
 
-$$
-P_{motor,stall} = 11.1\ V \times 5\ A = 55.5\ W
-$$
+```math
+P_{motor,stall} = 11.1\,\mathrm{V} \times 5\,\mathrm{A} = 55.5\,\mathrm{W}
+```
 
 Stall is not a normal operating condition, but it must be considered when selecting the battery, motor driver, wiring, connectors, switch, and protection system.
 
@@ -1260,17 +1272,17 @@ This estimate does not yet include the motor driver's conduction losses, regulat
 
 With an ideal 11.1 Wh battery:
 
-$$
-Runtime_{ideal} = \frac{11.1\ Wh}{28.60\ W} = 0.388\ h \approx 23.3\ minutes
-$$
+```math
+t_{\mathrm{ideal}} = \frac{11.1\,\mathrm{Wh}}{28.60\,\mathrm{W}} = 0.388\,\mathrm{h} \approx 23.3\,\mathrm{minutes}
+```
 
 This value is only a theoretical continuous-load estimate. Real runtime will be lower because of acceleration peaks, steering activity, battery discharge characteristics, voltage sag, and the required safety reserve.
 
 During a motor stall, the complete system could temporarily demand approximately:
 
-$$
-I_{stall,total} \approx 5.0 + 0.87 + 0.21 = 6.08\ A
-$$
+```math
+I_{stall,total} \approx 5.0 + 0.87 + 0.21 = 6.08\,\mathrm{A}
+```
 
 Therefore, the 1000 mAh battery must support more than 6.08 A without excessive voltage drop. This corresponds to an absolute theoretical minimum of approximately 6.08C, although a substantially higher battery discharge rating should be used to provide adequate margin.
 
@@ -1312,41 +1324,51 @@ The board is mounted at the top of the chassis. This shortens wiring and makes t
 The board uses an XT30 battery connector and includes the main controller interfaces, motor and servo outputs, sensor headers, and protection components. Ground pours on both layers, stitching vias, short return paths, and careful placement allow reliable high-baud-rate communication even with the motor close to the electronics.
 </td>
 <td>
-<img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Main-PCB.png" style="width: 100%;" alt="Main robot PCB">
+<img src="models/PCBs/Main-PCB.png" style="width: 100%;" alt="Main robot PCB">
 </td>
 </tr>
 </table>
 
 ### Schematic Overview
 
-<img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Full.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;" alt="Complete PCB schematic">
+The [Electronics](Electronics/) directory contains the editable Altium projects, schematic PDFs, PCB layouts, STEP models, and Gerber archives for the main board and the camera and ToF interface boards.
+
+| Board | Schematic PDFs | Editable project and PCB layout | Manufacturing files | 3D model |
+|---|---|---|---|---|
+| Main PCB and motor driver | [Main schematic](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/Electronics/main-pcb/WRO-MAIN.pdf) · [H-bridge schematic](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/Electronics/main-pcb/H-BRIDGE-SCH.pdf) | [Altium project](Electronics/main-pcb/WRO.PrjPcb) · [PCB layout](Electronics/main-pcb/MAIN-PCB.PcbDoc) | [Gerber archive](Electronics/main-pcb/MAIN-GERBER.rar) | [STEP](Electronics/main-pcb/MAINWRO-PCB.STEP) |
+| Camera interface PCB | [Camera schematic](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/Electronics/cam-pcb/CAM-SCH.pdf) | [Altium project](Electronics/cam-pcb/WRO-CAMERA.PrjPcb) · [PCB layout](Electronics/cam-pcb/CAM-PCB.PcbDoc) | [Gerber archive](Electronics/cam-pcb/CAMERA-GERBER.rar) | [STEP](Electronics/cam-pcb/CAM-PCB.step) |
+| ToF interface PCB | [ToF schematic](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/Electronics/tof-pcb/TOF-SCH.pdf) | [Altium project](Electronics/tof-pcb/WRO-TOF.PrjPcb) · [PCB layout](Electronics/tof-pcb/TOF-PCBPcbDoc.PcbDoc) | [Gerber archive](Electronics/tof-pcb/TOF-GERBER.rar) | [STEP](Electronics/tof-pcb/TOF-PCB.step) |
+
+The PDFs provide readable circuit references without requiring a PCB editor. Each board folder also includes editable `.SchDoc` schematic files and PNG previews. Open the `.PrjPcb` project in Altium Designer to work with its schematic and layout; extract the `.rar` archive to access the supplied Gerber files. The STEP models support mechanical integration with the chassis and mounts.
+
+<img src="Electronics/main-pcb/WRO-MAIN.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;" alt="Complete PCB schematic">
 
 <table style="width: 100%; table-layout: fixed;">
 <tr>
 <td>
 <h4>Microcontrollers</h4>
-<img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Microcontrollers.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;" alt="Microcontroller schematic">
+<img src="models/PCBs/Microcontrollers.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;" alt="Microcontroller schematic">
 <p style="font-size: 0.9em; margin-top: 0.5em;">Logic connections for the Teensy 4.0 and Seeed Studio XIAO ESP32-C6.</p>
 </td>
 </tr>
 <tr>
 <td>
 <h4>Power Delivery</h4>
-<img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Power%20Delivery.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;" alt="Power-delivery schematic">
+<img src="models/PCBs/Power%20Delivery.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;" alt="Power-delivery schematic">
 <p style="font-size: 0.9em; margin-top: 0.5em;">XT30 battery connector, 6 A slide switch, Pololu D24V50F5 5 V regulator, Pololu D24V10F3 3.3 V regulator, filtered servo output, and motor output.</p>
 </td>
 </tr>
 <tr>
 <td>
 <h4>Debugging and Feedback</h4>
-<img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Debugging.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;" alt="Debugging schematic">
+<img src="models/PCBs/Debugging.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;" alt="Debugging schematic">
 <p style="font-size: 0.9em; margin-top: 0.5em;">Buzzer, power LED, start button, and programmable RGB LED.</p>
 </td>
 </tr>
 <tr>
 <td>
 <h4>Sensors</h4>
-<img src="https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026/blob/main/models/PCBs/Sensors.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;" alt="Sensor schematic">
+<img src="models/PCBs/Sensors.png" style="width: 100%; border: 1px solid #ddd; border-radius: 5px;" alt="Sensor schematic">
 <p style="font-size: 0.9em; margin-top: 0.5em;">IDC connections for the ToF boards, UART camera connection, and the BNO085 mounted directly on the PCB.</p>
 </td>
 </tr>
@@ -1512,9 +1534,9 @@ The robot remains in `OPEN_TURN` while its heading error is 5° or greater. Once
 
 The Stanley controller is:
 
-$$
-\theta = k_h\,\operatorname{wrap180}(e_{imu}) + \operatorname{degrees}\left(\operatorname{atan2}(k_s e_{wall}, v + 1)\right)
-$$
+```math
+\theta = k_h\,\mathrm{wrap180}(e_{imu}) + \frac{180}{\pi}\,\mathrm{atan2}\left(k_s e_{wall}, v + 1\right)
+```
 
 where `e_wall` is the selected wall-distance error, `e_imu` is the IMU heading error, and `v` is the current speed. The requested steering value is constrained by the Ackermann controller before it reaches the servo.
 
@@ -1725,20 +1747,20 @@ The N6 provides image coordinates, not a metric distance. The controller therefo
 
 For a detected obstacle, the controller computes:
 
-$$
+```math
 d_{px} = \sqrt{(x - 160)^2 + y^2}
-$$
+```
 
-$$
-\alpha = \operatorname{atan2}(x - 160, y), \qquad
-\beta = \arcsin\left(\operatorname{clamp}\left(\frac{r_{px}}{d_{px}}, 0, 1\right)\right)
-$$
+```math
+\alpha = \mathrm{atan2}(x - 160, y), \qquad
+\beta = \arcsin\left(\min\left(1, \max\left(0, \frac{r_{px}}{d_{px}}\right)\right)\right)
+```
 
 where `r_px = 120 px` is the tangential safety radius. Green obstacles select a positive direction and red obstacles select a negative direction. The tangential angular error is:
 
-$$
+```math
 e_{tan} = \alpha + s\beta, \qquad s \in \{-1, +1\}
-$$
+```
 
 The controller implements the geometric and blending stages directly:
 
@@ -1945,23 +1967,6 @@ if (forwardDistanceMm >= POST_REVERSE_STRAIGHT_DISTANCE_MM &&
 
 The same state therefore has two distance-based exits. Normal turns return to obstacle navigation after 250 mm; the last sequence continues to the 1500 mm parking distance and activates the terminal finish behavior.
 
-### 9.8 Edge Cases
-
-> **Example edge case — lost camera packet**
->
-> - No valid packet arrives for 500 ms.
-> - The camera detection is marked stale.
-> - Tangential avoidance is disabled.
-> - The state machine remains active.
-> - Steering falls back to wall protection or IMU heading correction.
-
-> **Example edge case — stale wall sensor**
->
-> - The stream exceeds the 50 ms timeout.
-> - Its value is replaced by the invalid sentinel.
-> - The controller does not use that reading as a wall reference.
-> - Other valid sensors continue operating.
-
 ## 10. Testing, Validation and Results <a name="testing-validation"></a>
 
 This section separates implementation evidence from field-validation evidence. A commit identifies the firmware source; the tables show which version was tested and whether the acceptance criteria were met. Representative video or logs can support a campaign without requiring one file for every row.
@@ -2046,7 +2051,7 @@ This section separates implementation evidence from field-validation evidence. A
 
 ## 11. Construction, Serviceability and Debugging <a name="construction-guide"></a>
 
-The construction files are stored in the **`models/`** folder. The robot was designed as modules—steering, gearbox, chassis, sensor mounts, and main PCB—so that one subsystem can be removed without rebuilding the others.
+Mechanical construction files are stored in [models/](models/), and electrical design and manufacturing files are stored in [Electronics/](Electronics/). The robot was designed as modules—steering, gearbox, chassis, sensor mounts, and main PCB—so that one subsystem can be removed without rebuilding the others.
 
 ### Repository Map and Reproducibility Check
 
@@ -2064,6 +2069,10 @@ vision/open_vision.py            Open challenge N6 program
 vision/vision_obstacles.py       Obstacles challenge N6 program
 models/                          Printable CAD/STL files and assembly views
 models/PCBs/                     Wiring and PCB reference images
+Electronics/main-pcb/            Main PCB, H-bridge schematics, Altium files, Gerbers, and STEP
+Electronics/cam-pcb/             Camera interface schematic, Altium files, Gerbers, and STEP
+Electronics/tof-pcb/             ToF interface schematic, Altium files, Gerbers, and STEP
+Videos/README.md                 Open and Obstacles video links
 Main/platformio.ini              Legacy configuration; do not build this directory
 ```
 
@@ -2074,10 +2083,12 @@ Main/platformio.ini              Legacy configuration; do not build this directo
 | Mechanical fabrication files | `models/**/*.stl` | Included for chassis, transmission, steering, bumpers, camera support, and ToF supports |
 | Assembly references | `models/assemblys/` and `v-photos/` | Included |
 | Wiring and PCB overview | `models/PCBs/*.png` | Included as readable reference images |
-| Editable PCB source and manufacturing outputs | — | Not currently included; board recreation requires the original design files or a reverse-engineered schematic |
+| Schematic PDFs | [Electronics/](Electronics/) | Included for the main board, H-bridge, camera interface, and ToF interface |
+| Editable PCB source and manufacturing outputs | [Main PCB](Electronics/main-pcb/) · [Camera PCB](Electronics/cam-pcb/) · [ToF PCB](Electronics/tof-pcb/) | Altium projects, schematic and layout sources, Gerber archives, and STEP models included |
+| Competition videos | [Videos/README.md](Videos/README.md) | Open and Obstacles links included |
 | Calibration parameters and procedure | `src/include/ControlValues.h` and Section 8.2.1.1 | Included |
 
-The missing editable PCB source/manufacturing outputs are the main remaining repository limitation for full electrical reproduction. All software paths above are exact paths from the repository root.
+Electrical source files and manufacturing archives are indexed in [Schematic Overview](#schematic-overview). All paths above are relative to the repository root.
 
 ### Compact Packaging and Access
 
@@ -2177,16 +2188,9 @@ This subtotal intentionally reports only the rows shown. It does not claim to eq
 
 The historical table above is not part of the current robot total. Replacing a supplier or updating a purchase price changes only the corresponding unit-cost and total cells; the hardware specification remains the competition baseline defined in Section 5.1.
 
-## 13. Videos and Resources <a name="resources"></a>
+## 13. Resources <a name="resources"></a>
 
-
-
-- [WRO 2026 Future Engineers General Rules](https://wro-association.org/wp-content/uploads/WRO-2026-Future-Engineers-Self-Driving-Cars-General-Rules.pdf)
-
-- [WRO 2026 Future Engineers Documentation Rubric](https://wro-association.org/wp-content/uploads/WRO-2026-Future-Engineers-Documentation-Rubric.pdf)
-
-- [GitHub Repos](https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026)
-
+For resources links pls visit https://github.com/chaBotsMX/chaBots-Tuneados-WRO-Future-Engineers-2026 
 
 ---
 
@@ -2343,24 +2347,17 @@ Template for future detailed entries. Keep dates in YYYY-MM-DD format.
 - **Next action:** <Remaining work>
 -->
 
----
+
 
 ## 15. License <a name="license"></a>
 
-
-
-```
 
 MIT License
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software.
 
-```
 
 
 
----
 
-
-
->  *Document maintained by Chabots | Last updated: Sep 2026*
+  Document maintained by Chabots | Last updated: Sep 2026*
