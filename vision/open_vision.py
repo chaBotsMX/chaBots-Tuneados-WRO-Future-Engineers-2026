@@ -4,18 +4,18 @@ import time
 from machine import UART
 
 LINE_THRESHOLDS = [
-    (11, 20, -128, 127, -128, 127),  # ID 1: blue
-    (23, 82, 12, 127, -128, 39)  # ID 2: orange
+    (51, 82, 0, 29, 36, 127),  # ID 1: blue
+    (51, 82, 0, 29, 36, 127)  # ID 2: orange
 ]
 
 UART_ID = 3
-UART_BAUDRATE = 115200
+UART_BAUDRATE = 1000000
 
 START_BYTE_HIGH = 0xAA
 START_BYTE_LOW = 0x55
 PACKET_SIZE = 3
 
-DETECTION_ROI = (40, 30, 240, 50)
+DETECTION_ROI = (40, 40, 240, 50)
 MIN_LINE_PIXELS = 120
 MIN_LINE_AREA = 40
 
@@ -38,17 +38,14 @@ def configure_camera():
     camera.pixformat(csi.RGB565)
     camera.framesize(csi.QVGA)
     camera.framerate(120)
-    camera.auto_gain(False, gain_db=15.0)
+    camera.auto_gain(False, gain_db=13.0)
     camera.snapshot()
-    camera.auto_exposure(False, exposure_us=9000)
+    camera.auto_exposure(False, exposure_us=5500)
     camera.snapshot()
-    camera.auto_whitebal(False, rgb_gain_db=(26, 22, 27))
-    camera.brightness(-1)
+    camera.auto_whitebal(False, rgb_gain_db=(25, 21, 27))
+    camera.brightness(0)
     camera.saturation(0)
-    camera.contrast(-1)
-
-    if camera.cid() in (csi.OV7725, csi.OV5640):
-        camera.ioctl(csi.IOCTL_SET_NIGHT_MODE, False)
+    camera.contrast(0)
 
     camera.snapshot(time=2000)
     return camera

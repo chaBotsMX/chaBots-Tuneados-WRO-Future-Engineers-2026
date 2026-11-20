@@ -12,9 +12,9 @@
 #include <Servo.h>
 #include "DataTypes.h"
 
-#define MAX_ACKERMANN_ANGLE 25.94f
-#define MAX_SERVO_OFFSET    20.0f
-#define IDLE_STEERING_ANGLE 65.0f
+#define MAX_ACKERMANN_ANGLE 35.94f
+#define MAX_SERVO_OFFSET    30.0f
+#define IDLE_STEERING_ANGLE 80.0f
 
 #define SERVO_PIN 22
 
@@ -32,14 +32,15 @@ private:
 
     float interpolateServoOffset(float ackermannAngle);
 
-    static constexpr int MAP_SIZE = 5;
+    static constexpr int MAP_SIZE = 6;
 
     static constexpr SteeringCalibration steeringTable[MAP_SIZE] = {
         { 0.00f,  0.0f },
         { 5.00f,  5.0f },
         {11.92f, 10.0f },
         {18.17f, 15.0f },
-        {25.94f, 20.0f }
+        {25.94f, 20.0f },
+        {35.00f, 32.0f }
     };
 };
 

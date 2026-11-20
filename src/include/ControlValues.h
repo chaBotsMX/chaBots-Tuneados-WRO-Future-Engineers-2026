@@ -39,19 +39,22 @@ constexpr MotionTaskConfig OPEN_INITIAL_STRAIGHT_PROFILE = {
 };
 
 constexpr MotionTaskConfig OPEN_FOLLOW_WALL_PROFILE = {
-    130.0f, 90.0f, 30.0f, 30.0f, 0.0f, 0.0f
+    120.0f, 160.0f, 50.0f, 50.0f, 30.0f, 30.0f
 };
 
 constexpr MotionTaskConfig OPEN_ENDING_PROFILE = {
-    40.0f, 30.0f, 60.0f, 60.0f, 0.0f, 0.0f
+    90.0f, 160.0f, 70.0f, 70.0f, 0.0f, 0.0f
 };
 
 constexpr SpeedControlConfig OPEN_CRUISE_SPEED_CONTROL = {
-    70.0f, 1.0f, 0.1f
+    150.0f, 1.0f, 0.1f
 };
 
-#define EDGING_PWM -60
-#define EDGING_TARGET_DISTANCE 300
+constexpr MotionTaskConfig CROSS_PROFILE = {
+    95.0f, 50.0f, 20.0f, 20.0f, 0.0f, 0.0f
+};
+#define EDGING_PWM -50
+#define EDGING_TARGET_DISTANCE 200
 
 #define INITIAL_REVERSE_TIME 1000
 #define INITIAL_REVERSE_PWM 70
@@ -60,7 +63,7 @@ constexpr SpeedControlConfig OPEN_CRUISE_SPEED_CONTROL = {
 
 #define CRUISE_MIN_DISTANCE_MM 600
 #define TURN_MIN_DISTANCE_MM 300
-#define TURN_MAX_DISTANCE_MM 700
+#define TURN_MAX_DISTANCE_MM 600
 #define INNER_WALL_MIN_DISTANCE_TO_TURN_MM 3000
 #define INNER_WALL_MAX_DISTANCE_TO_CRUISE_MM 3000
 #define FOLLOW_WALL_RECOVERY_PWM 100
@@ -69,26 +72,46 @@ constexpr SpeedControlConfig OPEN_CRUISE_SPEED_CONTROL = {
 // Open Turn controls
 
 #define OPEN_TURN_ERROR_THRESHOLD_DEG 5
-#define OPEN_TURN_PWM -150
+#define OPEN_TURN_PWM -200
 #define OPEN_TURN_STEERING_GAIN 2.0f
 
 
 // Tangential evasion controls. All distance values in this block are OpenMV pixels.
-#define TAN_EVASION_SECURITY_RADIUS_PX 120
-#define TAN_EVASION_ACTIVATION_DISTANCE_PX 170
-#define TAN_EVASION_FULL_EVASION_DISTANCE_PX 150
-#define TAN_EVASION_ORIENTATION_GAIN 1.5f // Gain for orientation error in tangent evasion
-#define TAN_EVASION_EVASION_GAIN 2.0f // Gain for evasion
-#define TAN_EVASION_KP 2.0f // Proportional gain for PD
+#define TAN_EVASION_SECURITY_RADIUS_PX 115
+#define TAN_EVASION_ACTIVATION_DISTANCE_PX 200
+#define TAN_EVASION_FULL_EVASION_DISTANCE_PX 180
+#define TAN_EVASION_ORIENTATION_GAIN 1.2f // Gain for orientation error in tangent evasion
+#define TAN_EVASION_EVASION_GAIN 1.30f // Gain for evasion
+#define TAN_EVASION_KP 0.50f // Proportional gain for PD
 #define TAN_EVASION_KD 0.02f // Derivative gain for PD
 #define TAN_EVASION_DERIVATIVE_FILTER 0.20f // Derivative filter
 
+// Rotated camera: smaller base Y means nearer. Multiplier 1 restores the old controller.
+#ifndef TAN_EVASION_DEPTH_START_Y_PX
+#define TAN_EVASION_DEPTH_START_Y_PX 90.0f
+#endif
+#ifndef TAN_EVASION_DEPTH_FULL_Y_PX
+#define TAN_EVASION_DEPTH_FULL_Y_PX 70.0f
+#endif
+#ifndef TAN_EVASION_DEPTH_GAIN_MAX
+#define TAN_EVASION_DEPTH_GAIN_MAX 2.0f
+#endif
+#ifndef TAN_EVASION_DEPTH_SMOOTH_MS
+#define TAN_EVASION_DEPTH_SMOOTH_MS 30.0f
+#endif
+
+// Optional USB trace: Y, color, validity, control mode, gain and requested/applied steering.
+#ifndef DEBUG_TANGENT_EVASION
+#define DEBUG_TANGENT_EVASION 0
+#endif
+
 // Obstacle Controls
-#define OBSTACLES_PWM_DRIVE -80 // Standar Drive PWM
+#define OBSTACLES_PWM_DRIVE -50 // Standar Drive PWM
 #define OBSTACLES_RECOVERY_TIME_MS 350 // Recovery time when to close to obstacle
-#define SIDE_WALLS_ACTIVATION_DISTANCE_MM 100 // Distance to activate tangent evasion maneuver
+#define SIDE_WALLS_ACTIVATION_DISTANCE_MM 150 // Distance to activate tangent evasion maneuver
 #define NO_OBSTACLE_IMU_GAIN 3.0f
-#define OBSTACLE_CLOSE_RECOVERY_DISTANCE_PX 80 // Image-space distance that starts recovery
+#define OBSTACLE_CLOSE_RECOVERY_DISTANCE_PX 90 // Image-space distance that starts recovery
+#define FINAL_OBSTACLE_DRIVE -70
 
 // SIDE WALLS CONTROLS
 #define SIDE_WALLS_ACTIVATION_DISTANCE_MM 100 // Distance to activate tangent evasion
@@ -98,7 +121,7 @@ constexpr SpeedControlConfig OPEN_CRUISE_SPEED_CONTROL = {
 // BLUE LINE CONTROLS
 
 #define BLUE_LINE_STABLE_TIME_MS 100 // Minimum time that the blue line must be detected to trigger a turn
-#define BLUE_LINE_REARM_DISTANCE_MM 1500.0f // MM that the robot have to travel before trigger other turn
+#define BLUE_LINE_REARM_DISTANCE_MM 1400.0f // MM that the robot have to travel before trigger other turn
 
 
 // Vision constants
@@ -113,12 +136,5 @@ constexpr SpeedControlConfig OPEN_CRUISE_SPEED_CONTROL = {
 #define CORNER_DETECTION_DISTANCE_MM 500
 
 // a;adir histeresis a la recuperaicon  de la rodna de obstaculos, 
-// mas estados en obstaculos
-// corregir que no se inicie IMU
-// mas estados para la recuperacion en abierta
-// deteccion correcta de aldos en abierta
 // deteccion de giro en obstaculos
-// mas casos de vueltas en obstaculos para que no choque sie sta muy cerca de la pared a la que gira
-// que siga la pared si el obstaculo lo obliga a girar hacia esa pared
-// Probar N6
-// checar que tan viable es hace homografia  
+// checar que tan viable es hacer homografia  

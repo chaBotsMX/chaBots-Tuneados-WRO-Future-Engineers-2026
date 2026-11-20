@@ -67,7 +67,6 @@ private:
     int16_t computeWallDistance(const VL53L8CX_ResultsData& results, uint8_t& chosenStatus) const;
 
     static bool isUsableStatus(uint8_t status);
-    static int16_t medianInt16(int16_t* values, uint8_t count);
 };
 
 #endif

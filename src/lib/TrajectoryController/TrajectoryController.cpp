@@ -25,7 +25,8 @@ float TrajectoryController::tangentEvasion(
     float direction,
     float obstacleAngle,
     float obstacleSecurityRadiusPx,
-    float distanceToObstaclePx)
+    float distanceToObstaclePx,
+    float obstacleDepthY)
 {
     if (distanceToObstaclePx <= 0.0f) {
         resetTangentEvasion(imuError);
@@ -78,15 +79,63 @@ float TrajectoryController::tangentEvasion(
         TAN_EVASION_KP * totalAngularError +
         TAN_EVASION_KD * filteredEvasionDerivative;
 
+    const float depthGain = updateDepthGain(obstacleDepthY, direction, deltaTimeSeconds);
+    if (depthGain != 1.0f && direction * evasionAngularError > 0.0f) {
+        // Extra proportional evasion only: neither heading gain nor D sees the depth boost.
+        // Once the tangent reverses, preserve the old return correction without amplifying it.
+        const float evasionContribution =
+            evasionWeight * TAN_EVASION_EVASION_GAIN * evasionAngularError;
+        output += TAN_EVASION_KP * (depthGain - 1.0f) * evasionContribution;
+    }
+
     lastEvasionError = totalAngularError;
     evasionInitialized = true;
     deltaEvasion = 0;
+    lastTangentialOutputDeg = output;
 
     return output;
 }
 
+float TrajectoryController::updateDepthGain(float obstacleDepthY, float direction,
+                                           float deltaTimeSeconds)
+{
+    const float startY = TAN_EVASION_DEPTH_START_Y_PX;
+    const float fullY = TAN_EVASION_DEPTH_FULL_Y_PX;
+    const float maxGain = TAN_EVASION_DEPTH_GAIN_MAX;
+    const float smoothMs = TAN_EVASION_DEPTH_SMOOTH_MS;
+    if (!isfinite(obstacleDepthY) || obstacleDepthY < 0.0f || obstacleDepthY >= VISION_HEIGHT ||
+        !isfinite(startY) || !isfinite(fullY) || startY <= fullY ||
+        !isfinite(maxGain) || maxGain <= 1.0f || !isfinite(smoothMs) || smoothMs < 0.0f) {
+        resetDepthGain();
+        return 1.0f;
+    }
+
+    const float t = constrain((startY - obstacleDepthY) / (startY - fullY), 0.0f, 1.0f);
+    const float target = 1.0f + (maxGain - 1.0f) * t * t * (3.0f - 2.0f * t);
+    if (!depthGainInitialized || direction != lastDepthDirection || smoothMs == 0.0f) {
+        // A newly acquired close block gets full applicable boost without a startup delay.
+        lastDepthGain = target;
+    }
+    else if (deltaTimeSeconds > 0.0f) {
+        const float alpha = 1.0f - expf(-deltaTimeSeconds * 1000.0f / smoothMs);
+        lastDepthGain += alpha * (target - lastDepthGain);
+    }
+    lastDepthGain = constrain(lastDepthGain, 1.0f, maxGain);
+    lastDepthDirection = direction;
+    depthGainInitialized = true;
+    return lastDepthGain;
+}
+
+void TrajectoryController::resetDepthGain()
+{
+    lastDepthGain = 1.0f;
+    depthGainInitialized = false;
+    lastDepthDirection = 0.0f;
+}
+
 void TrajectoryController::resetTangentEvasion(float currentError)
 {
+    resetDepthGain();
     lastEvasionError = currentError;
     filteredEvasionDerivative = 0.0f;
     evasionInitialized = false;
